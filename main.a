@@ -13,11 +13,11 @@ TEMP_LO	= $08	; scaling temp low byte
 ; --- Soft Switches ---
 TXTCLR	= $C050		; enable graphics
 MIXCLR	= $C052		; full screen (no mixed text)
-TXTPAGE1 = $C054	; display page 1
+TXTPAGE2 = $C055	; display page 2
 HIRES	= $C057		; enable hires
 
 ; --- Constants ---
-HGRBASE	= $20		; HGR page 1 high byte
+HGRBASE	= $40		; HGR page 2 high byte
 NUM_STARS = 30		; number of stars
 CENTER_X = 20		; screen center byte column
 CENTER_Y = 96		; screen center pixel row
@@ -47,7 +47,7 @@ StarsDYH ds NUM_STARS	; Y offset integer part (signed, pixel rows)
 Start SUBROUTINE
 	bit TXTCLR
 	bit MIXCLR
-	bit TXTPAGE1
+	bit TXTPAGE2
 	bit HIRES
 
 	lda #$A5

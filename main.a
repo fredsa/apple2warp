@@ -1,0 +1,342 @@
+	processor 6502
+
+; --- Zero Page Variables ---
+STAR_X	= $00	; current star screen X (byte column)
+STAR_Y	= $01	; current star screen Y (pixel row)
+HGRPTR	= $02	; pointer for HGR memory (lo, hi)
+ROWTEMP	= $04	; temp for row calculation
+STAR_IDX = $05	; current star index
+SEED	= $06	; PRNG state
+TEMP_HI	= $07	; scaling temp high byte
+TEMP_LO	= $08	; scaling temp low byte
+
+; --- Soft Switches ---
+TXTCLR	= $C050		; enable graphics
+MIXCLR	= $C052		; full screen (no mixed text)
+TXTPAGE1 = $C054	; display page 1
+HIRES	= $C057		; enable hires
+
+; --- Constants ---
+HGRBASE	= $20		; HGR page 1 high byte
+NUM_STARS = 30		; number of stars
+CENTER_X = 20		; screen center byte column
+CENTER_Y = 96		; screen center pixel row
+
+	org $803
+
+; ==============================
+;         Data Tables
+; ==============================
+	jmp Start
+
+ThirdOff
+	.byte $28, $50
+
+; --- Star state arrays (8.8 fixed-point offsets from center) ---
+StarsDXL ds NUM_STARS	; X offset fractional part
+StarsDXH ds NUM_STARS	; X offset integer part (signed)
+StarsDYL ds NUM_STARS	; Y offset fractional part
+StarsDYH ds NUM_STARS	; Y offset integer part (signed)
+
+; ==============================
+;         Entry Point
+; ==============================
+Start SUBROUTINE
+	bit TXTCLR
+	bit MIXCLR
+	bit TXTPAGE1
+	bit HIRES
+
+	lda #$A5
+	sta SEED
+
+	jsr ClearHGR
+	jsr InitAllStars
+
+; ==============================
+;         Main Loop
+; ==============================
+MainLoop SUBROUTINE
+	lda #0
+	sta STAR_IDX
+.starLoop
+	jsr ProcessStar
+	inc STAR_IDX
+	lda STAR_IDX
+	cmp #NUM_STARS
+	bne .starLoop
+	jmp MainLoop
+
+; ==============================
+;       Process One Star
+; ==============================
+ProcessStar SUBROUTINE
+	ldx STAR_IDX
+
+	; --- Erase at old position ---
+	lda StarsDXH,x
+	clc
+	adc #CENTER_X
+	sta STAR_X
+	bmi .skipErase
+	cmp #40
+	bcs .skipErase
+	lda StarsDYH,x
+	clc
+	adc #CENTER_Y
+	sta STAR_Y
+	bmi .skipErase
+	cmp #192
+	bcs .skipErase
+	jsr EraseStar
+.skipErase
+
+	; --- Scale DX by 9/8: DX += DX/8 ---
+	ldx STAR_IDX
+	lda StarsDXH,x
+	sta TEMP_HI
+	lda StarsDXL,x
+	sta TEMP_LO
+	; Arithmetic shift right 3 times (signed /8)
+	lda TEMP_HI
+	cmp #$80
+	ror TEMP_HI
+	ror TEMP_LO
+	lda TEMP_HI
+	cmp #$80
+	ror TEMP_HI
+	ror TEMP_LO
+	lda TEMP_HI
+	cmp #$80
+	ror TEMP_HI
+	ror TEMP_LO
+	; Add DX/8 to DX
+	ldx STAR_IDX
+	lda StarsDXL,x
+	clc
+	adc TEMP_LO
+	sta StarsDXL,x
+	lda StarsDXH,x
+	adc TEMP_HI
+	sta StarsDXH,x
+
+	; --- Scale DY by 9/8: DY += DY/8 ---
+	lda StarsDYH,x
+	sta TEMP_HI
+	lda StarsDYL,x
+	sta TEMP_LO
+	lda TEMP_HI
+	cmp #$80
+	ror TEMP_HI
+	ror TEMP_LO
+	lda TEMP_HI
+	cmp #$80
+	ror TEMP_HI
+	ror TEMP_LO
+	lda TEMP_HI
+	cmp #$80
+	ror TEMP_HI
+	ror TEMP_LO
+	ldx STAR_IDX
+	lda StarsDYL,x
+	clc
+	adc TEMP_LO
+	sta StarsDYL,x
+	lda StarsDYH,x
+	adc TEMP_HI
+	sta StarsDYH,x
+
+	; --- Compute new screen position ---
+	lda StarsDXH,x
+	clc
+	adc #CENTER_X
+	sta STAR_X
+	bmi .respawn
+	cmp #40
+	bcs .respawn
+	lda StarsDYH,x
+	clc
+	adc #CENTER_Y
+	sta STAR_Y
+	bmi .respawn
+	cmp #192
+	bcs .respawn
+
+	; --- Draw at new position ---
+	jsr DrawStar
+	rts
+
+.respawn
+	jsr InitStar
+	ldx STAR_IDX
+	lda StarsDXH,x
+	clc
+	adc #CENTER_X
+	sta STAR_X
+	lda StarsDYH,x
+	clc
+	adc #CENTER_Y
+	sta STAR_Y
+	jsr DrawStar
+	rts
+
+; ==============================
+;     Initialize All Stars
+; ==============================
+InitAllStars SUBROUTINE
+	lda #0
+	sta STAR_IDX
+.loop
+	jsr InitStar
+	inc STAR_IDX
+	lda STAR_IDX
+	cmp #NUM_STARS
+	bne .loop
+	rts
+
+; ==============================
+;   Initialize One Star
+; ==============================
+; Sets random 8.8 fixed-point offset from center
+; DX_hi and DY_hi in range ±1 to ±4
+InitStar SUBROUTINE
+	ldx STAR_IDX
+	; Random fractional parts
+	jsr Random
+	sta StarsDXL,x
+	jsr Random
+	sta StarsDYL,x
+	; DX_hi = ±(1-4)
+	jsr Random
+	pha		; save for sign bit
+	and #$03
+	clc
+	adc #1		; 1-4
+	sta StarsDXH,x
+	pla
+	bpl .dxPos
+	lda #0
+	sec
+	sbc StarsDXH,x
+	sta StarsDXH,x
+.dxPos
+	; DY_hi = ±(1-4)
+	jsr Random
+	pha
+	and #$03
+	clc
+	adc #1
+	sta StarsDYH,x
+	pla
+	bpl .dyPos
+	lda #0
+	sec
+	sbc StarsDYH,x
+	sta StarsDYH,x
+.dyPos
+	rts
+
+; ==============================
+;      PRNG (Galois LFSR)
+; ==============================
+; Returns random byte in A, preserves X/Y
+Random SUBROUTINE
+	lda SEED
+	lsr
+	bcc .noTap
+	eor #$B4
+.noTap
+	sta SEED
+	rts
+
+; ==============================
+;        Draw Star Pixel
+; ==============================
+DrawStar SUBROUTINE
+	lda STAR_Y
+	jsr CalcRowAddr
+	ldy STAR_X
+	lda #$08	; center pixel of byte
+	sta (HGRPTR),y
+	rts
+
+; ==============================
+;       Erase Star Pixel
+; ==============================
+EraseStar SUBROUTINE
+	lda STAR_Y
+	jsr CalcRowAddr
+	ldy STAR_X
+	lda #0
+	sta (HGRPTR),y
+	rts
+
+; ==============================
+;      Clear HGR Page 1
+; ==============================
+ClearHGR SUBROUTINE
+	lda #0
+	sta HGRPTR
+	lda #HGRBASE
+	sta HGRPTR+1
+	tay
+	lda #0
+.loop
+	sta (HGRPTR),y
+	iny
+	bne .loop
+	inc HGRPTR+1
+	ldx HGRPTR+1
+	cpx #HGRBASE+$20
+	bne .loop
+	rts
+
+; ==============================
+;    Calculate HGR Row Address
+; ==============================
+; Input: A = row (0-191)
+; Output: HGRPTR = row start address
+; Clobbers: A, X
+CalcRowAddr SUBROUTINE
+	sta ROWTEMP
+
+	; High byte = HGRBASE + (row & 7) * 4 + (row >> 4) & 3
+	and #$07
+	asl
+	asl
+	adc #HGRBASE	; carry clear after shifts
+	sta HGRPTR+1
+
+	lda ROWTEMP
+	lsr
+	lsr
+	lsr
+	lsr
+	and #$03
+	clc
+	adc HGRPTR+1
+	sta HGRPTR+1
+
+	; Low byte = ((row & 8) ? $80 : $00) + (row >> 6) * $28
+	lda ROWTEMP
+	and #$08
+	beq .noBit3
+	lda #$80
+.noBit3
+	sta HGRPTR
+
+	lda ROWTEMP
+	lsr
+	lsr
+	lsr
+	lsr
+	lsr
+	lsr		; A = row >> 6 (0, 1, or 2)
+	beq .done
+	tax
+	lda ThirdOff-1,x
+	clc
+	adc HGRPTR
+	sta HGRPTR
+.done
+	rts

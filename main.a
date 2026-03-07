@@ -32,11 +32,14 @@ CENTER_Y = 96		; screen center pixel row
 ThirdOff
 	.byte $28, $50
 
+BitMasks
+	.byte $01, $02, $04, $08, $10, $20, $40
+
 ; --- Star state arrays (8.8 fixed-point offsets from center) ---
 StarsDXL ds NUM_STARS	; X offset fractional part
-StarsDXH ds NUM_STARS	; X offset integer part (signed)
+StarsDXH ds NUM_STARS	; X offset integer part (signed, byte columns)
 StarsDYL ds NUM_STARS	; Y offset fractional part
-StarsDYH ds NUM_STARS	; Y offset integer part (signed)
+StarsDYH ds NUM_STARS	; Y offset integer part (signed, pixel rows)
 
 ; ==============================
 ;         Entry Point
@@ -197,8 +200,7 @@ InitAllStars SUBROUTINE
 ; ==============================
 ;   Initialize One Star
 ; ==============================
-; Sets random 8.8 fixed-point offset from center
-; DX_hi and DY_hi in range ±1 to ±4
+; DX_hi ±(1-4) byte columns, DY_hi ±(5-20) pixel rows
 InitStar SUBROUTINE
 	ldx STAR_IDX
 	; Random fractional parts
@@ -220,12 +222,12 @@ InitStar SUBROUTINE
 	sbc StarsDXH,x
 	sta StarsDXH,x
 .dxPos
-	; DY_hi = ±(1-4)
+	; DY_hi = ±(5-20) (scaled for 7-pixel byte columns)
 	jsr Random
 	pha
-	and #$03
+	and #$0F
 	clc
-	adc #1
+	adc #5
 	sta StarsDYH,x
 	pla
 	bpl .dyPos
@@ -252,22 +254,56 @@ Random SUBROUTINE
 ; ==============================
 ;        Draw Star Pixel
 ; ==============================
+; Uses DXL top 3 bits for sub-byte-column pixel position
 DrawStar SUBROUTINE
+	; Compute pixel bit mask from DX fractional part
+	ldx STAR_IDX
+	lda StarsDXL,x
+	lsr
+	lsr
+	lsr
+	lsr
+	lsr		; top 3 bits → 0-7
+	cmp #7
+	bcc .bitOk
+	lda #6		; clamp to 0-6
+.bitOk
+	tax
+	lda BitMasks,x
+	pha		; save pixel mask
 	lda STAR_Y
 	jsr CalcRowAddr
 	ldy STAR_X
-	lda #$08	; center pixel of byte
+	pla		; A = pixel mask
+	ora (HGRPTR),y	; set our pixel, preserve others
 	sta (HGRPTR),y
 	rts
 
 ; ==============================
 ;       Erase Star Pixel
 ; ==============================
+; Uses DXL top 3 bits to clear only our pixel
 EraseStar SUBROUTINE
+	ldx STAR_IDX
+	lda StarsDXL,x
+	lsr
+	lsr
+	lsr
+	lsr
+	lsr
+	cmp #7
+	bcc .bitOk
+	lda #6
+.bitOk
+	tax
+	lda BitMasks,x
+	eor #$FF	; invert for AND mask
+	pha
 	lda STAR_Y
 	jsr CalcRowAddr
 	ldy STAR_X
-	lda #0
+	pla		; A = AND mask (our bit cleared)
+	and (HGRPTR),y	; clear our pixel, preserve others
 	sta (HGRPTR),y
 	rts
 

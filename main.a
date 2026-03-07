@@ -18,7 +18,7 @@ HIRES	= $C057		; enable hires
 
 ; --- Constants ---
 HGRBASE	= $40		; HGR page 2 high byte
-NUM_STARS = 50		; number of stars
+NUM_STARS = 42		; number of stars
 CENTER_X = 20		; screen center byte column
 CENTER_Y = 96		; screen center pixel row
 

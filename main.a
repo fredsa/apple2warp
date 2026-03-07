@@ -18,7 +18,7 @@ HIRES	= $C057		; enable hires
 
 ; --- Constants ---
 HGRBASE	= $40		; HGR page 2 high byte
-NUM_STARS = 30		; number of stars
+NUM_STARS = 50		; number of stars
 CENTER_X = 20		; screen center byte column
 CENTER_Y = 96		; screen center pixel row
 
@@ -45,10 +45,10 @@ StarsDYH ds NUM_STARS	; Y offset integer part (signed, pixel rows)
 ;         Entry Point
 ; ==============================
 Start SUBROUTINE
-	bit TXTCLR
-	bit MIXCLR
-	bit TXTPAGE2
-	bit HIRES
+	sta TXTCLR
+	sta MIXCLR
+	sta TXTPAGE2
+	sta HIRES
 
 	lda #$A5
 	sta SEED
@@ -81,26 +81,24 @@ ProcessStar SUBROUTINE
 	clc
 	adc #CENTER_X
 	sta STAR_X
-	bmi .skipErase
 	cmp #40
 	bcs .skipErase
 	lda StarsDYH,x
 	clc
 	adc #CENTER_Y
 	sta STAR_Y
-	bmi .skipErase
 	cmp #192
 	bcs .skipErase
 	jsr EraseStar
 .skipErase
 
-	; --- Scale DX by 9/8: DX += DX/8 ---
+	; --- Scale DX by 17/16: DX += DX/16 ---
 	ldx STAR_IDX
 	lda StarsDXH,x
 	sta TEMP_HI
 	lda StarsDXL,x
 	sta TEMP_LO
-	; Arithmetic shift right 3 times (signed /8)
+	; Arithmetic shift right 4 times (signed /16)
 	lda TEMP_HI
 	cmp #$80
 	ror TEMP_HI
@@ -113,7 +111,11 @@ ProcessStar SUBROUTINE
 	cmp #$80
 	ror TEMP_HI
 	ror TEMP_LO
-	; Add DX/8 to DX
+	lda TEMP_HI
+	cmp #$80
+	ror TEMP_HI
+	ror TEMP_LO
+	; Add DX/16 to DX
 	ldx STAR_IDX
 	lda StarsDXL,x
 	clc
@@ -123,11 +125,15 @@ ProcessStar SUBROUTINE
 	adc TEMP_HI
 	sta StarsDXH,x
 
-	; --- Scale DY by 9/8: DY += DY/8 ---
+	; --- Scale DY by 17/16: DY += DY/16 ---
 	lda StarsDYH,x
 	sta TEMP_HI
 	lda StarsDYL,x
 	sta TEMP_LO
+	lda TEMP_HI
+	cmp #$80
+	ror TEMP_HI
+	ror TEMP_LO
 	lda TEMP_HI
 	cmp #$80
 	ror TEMP_HI
@@ -154,14 +160,12 @@ ProcessStar SUBROUTINE
 	clc
 	adc #CENTER_X
 	sta STAR_X
-	bmi .respawn
 	cmp #40
 	bcs .respawn
 	lda StarsDYH,x
 	clc
 	adc #CENTER_Y
 	sta STAR_Y
-	bmi .respawn
 	cmp #192
 	bcs .respawn
 
@@ -170,7 +174,7 @@ ProcessStar SUBROUTINE
 	rts
 
 .respawn
-	jsr InitStar
+	jsr RespawnStar
 	ldx STAR_IDX
 	lda StarsDXH,x
 	clc
@@ -186,11 +190,12 @@ ProcessStar SUBROUTINE
 ; ==============================
 ;     Initialize All Stars
 ; ==============================
+; Spread stars across full screen by using wide DY range
 InitAllStars SUBROUTINE
 	lda #0
 	sta STAR_IDX
 .loop
-	jsr InitStar
+	jsr InitStarWide
 	inc STAR_IDX
 	lda STAR_IDX
 	cmp #NUM_STARS
@@ -198,22 +203,22 @@ InitAllStars SUBROUTINE
 	rts
 
 ; ==============================
-;   Initialize One Star
+;   Init Star (wide spread)
 ; ==============================
-; DX_hi ±(1-4) byte columns, DY_hi ±(5-20) pixel rows
-InitStar SUBROUTINE
+; For initial distribution: DX ±(1-18), DY ±(1-90)
+; Stars pre-spread across full screen
+InitStarWide SUBROUTINE
 	ldx STAR_IDX
-	; Random fractional parts
 	jsr Random
 	sta StarsDXL,x
 	jsr Random
 	sta StarsDYL,x
-	; DX_hi = ±(1-4)
+	; DX_hi = ±(1-18)
 	jsr Random
-	pha		; save for sign bit
-	and #$03
+	pha
+	and #$0F
 	clc
-	adc #1		; 1-4
+	adc #1		; 1-16
 	sta StarsDXH,x
 	pla
 	bpl .dxPos
@@ -222,7 +227,60 @@ InitStar SUBROUTINE
 	sbc StarsDXH,x
 	sta StarsDXH,x
 .dxPos
-	; DY_hi = ±(5-20) (scaled for 7-pixel byte columns)
+	; DY_hi = ±(1-90) — full screen coverage
+	jsr Random
+	pha
+	and #$3F
+	clc
+	adc #1		; 1-64
+	; Add another random 0-26 for range 1-90
+	sta TEMP_LO
+	jsr Random
+	and #$1F	; 0-31
+	clc
+	adc TEMP_LO
+	; Clamp to 90 max
+	cmp #91
+	bcc .dyOk
+	lda #90
+.dyOk
+	ldx STAR_IDX
+	sta StarsDYH,x
+	pla
+	bpl .dyPos
+	lda #0
+	sec
+	sbc StarsDYH,x
+	sta StarsDYH,x
+.dyPos
+	rts
+
+; ==============================
+;   Respawn Star (near center)
+; ==============================
+; For respawn: small offsets so stars emerge from center
+; DX ±(1-4), DY ±(5-20)
+RespawnStar SUBROUTINE
+	ldx STAR_IDX
+	jsr Random
+	sta StarsDXL,x
+	jsr Random
+	sta StarsDYL,x
+	; DX_hi = ±(1-4)
+	jsr Random
+	pha
+	and #$03
+	clc
+	adc #1
+	sta StarsDXH,x
+	pla
+	bpl .dxPos
+	lda #0
+	sec
+	sbc StarsDXH,x
+	sta StarsDXH,x
+.dxPos
+	; DY_hi = ±(5-20)
 	jsr Random
 	pha
 	and #$0F
@@ -241,7 +299,6 @@ InitStar SUBROUTINE
 ; ==============================
 ;      PRNG (Galois LFSR)
 ; ==============================
-; Returns random byte in A, preserves X/Y
 Random SUBROUTINE
 	lda SEED
 	lsr
@@ -254,35 +311,32 @@ Random SUBROUTINE
 ; ==============================
 ;        Draw Star Pixel
 ; ==============================
-; Uses DXL top 3 bits for sub-byte-column pixel position
 DrawStar SUBROUTINE
-	; Compute pixel bit mask from DX fractional part
 	ldx STAR_IDX
 	lda StarsDXL,x
 	lsr
 	lsr
 	lsr
 	lsr
-	lsr		; top 3 bits → 0-7
+	lsr
 	cmp #7
 	bcc .bitOk
-	lda #6		; clamp to 0-6
+	lda #6
 .bitOk
 	tax
 	lda BitMasks,x
-	pha		; save pixel mask
+	pha
 	lda STAR_Y
 	jsr CalcRowAddr
 	ldy STAR_X
-	pla		; A = pixel mask
-	ora (HGRPTR),y	; set our pixel, preserve others
+	pla
+	ora (HGRPTR),y
 	sta (HGRPTR),y
 	rts
 
 ; ==============================
 ;       Erase Star Pixel
 ; ==============================
-; Uses DXL top 3 bits to clear only our pixel
 EraseStar SUBROUTINE
 	ldx STAR_IDX
 	lda StarsDXL,x
@@ -297,18 +351,18 @@ EraseStar SUBROUTINE
 .bitOk
 	tax
 	lda BitMasks,x
-	eor #$FF	; invert for AND mask
+	eor #$FF
 	pha
 	lda STAR_Y
 	jsr CalcRowAddr
 	ldy STAR_X
-	pla		; A = AND mask (our bit cleared)
-	and (HGRPTR),y	; clear our pixel, preserve others
+	pla
+	and (HGRPTR),y
 	sta (HGRPTR),y
 	rts
 
 ; ==============================
-;      Clear HGR Page 1
+;      Clear HGR Page 2
 ; ==============================
 ClearHGR SUBROUTINE
 	lda #0
@@ -330,17 +384,13 @@ ClearHGR SUBROUTINE
 ; ==============================
 ;    Calculate HGR Row Address
 ; ==============================
-; Input: A = row (0-191)
-; Output: HGRPTR = row start address
-; Clobbers: A, X
 CalcRowAddr SUBROUTINE
 	sta ROWTEMP
 
-	; High byte = HGRBASE + (row & 7) * 4 + (row >> 4) & 3
 	and #$07
 	asl
 	asl
-	adc #HGRBASE	; carry clear after shifts
+	adc #HGRBASE
 	sta HGRPTR+1
 
 	lda ROWTEMP
@@ -353,7 +403,6 @@ CalcRowAddr SUBROUTINE
 	adc HGRPTR+1
 	sta HGRPTR+1
 
-	; Low byte = ((row & 8) ? $80 : $00) + (row >> 6) * $28
 	lda ROWTEMP
 	and #$08
 	beq .noBit3
@@ -367,7 +416,7 @@ CalcRowAddr SUBROUTINE
 	lsr
 	lsr
 	lsr
-	lsr		; A = row >> 6 (0, 1, or 2)
+	lsr
 	beq .done
 	tax
 	lda ThirdOff-1,x

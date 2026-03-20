@@ -12,6 +12,9 @@ TEMP_LO	= $08	; scaling temp low byte
 SHIP_X	= $09	; ship byte column (0-38)
 SHIP_Y	= $0A	; ship top pixel row (0-186)
 SHIP_ROW = $0B	; temp: current sprite row being drawn
+BULL_X	= $0C	; bullet byte column
+BULL_Y	= $0D	; bullet pixel row
+BULL_ACT = $0E	; bullet active flag (0=inactive)
 
 ; --- Soft Switches ---
 TXTCLR	= $C050		; enable graphics
@@ -32,6 +35,7 @@ CENTER_Y = 96		; screen center pixel row
 SHIP_START_X = 18	; ship initial X
 SHIP_START_Y = 150	; ship initial Y
 SHIP_HEIGHT = 5		; ship sprite height in rows
+BULLET_SPEED = 4	; pixels per frame
 
 	org $803
 
@@ -76,6 +80,9 @@ Start SUBROUTINE
 	lda #SHIP_START_Y
 	sta SHIP_Y
 
+	lda #0
+	sta BULL_ACT
+
 	jsr ClearHGR
 	jsr InitAllStars
 
@@ -92,6 +99,7 @@ MainLoop SUBROUTINE
 	cmp #NUM_STARS
 	bne .starLoop
 
+	jsr ProcessBullet
 	jsr EraseShip
 	jsr ReadInput
 	jsr DrawShip
@@ -106,15 +114,34 @@ ReadInput SUBROUTINE
 	lda KBD
 	bpl .noKey		; bpl .tryJoystick
 	sta KBDSTRB
-	cmp #$8B		; up arrow
-	beq .up
-	cmp #$8A		; down arrow
-	beq .down
+	cmp #$A0		; space bar
+	beq .fire
 	cmp #$88		; left arrow
 	beq .left
 	cmp #$95		; right arrow
 	beq .right
+	cmp #$8B		; up arrow
+	beq .goUp
+	cmp #$8A		; down arrow
+	beq .goDown
 .noKey
+	rts
+.goUp
+	jmp .up
+.goDown
+	jmp .down
+
+.fire
+	lda BULL_ACT
+	bne .noKey		; already active, ignore
+	lda SHIP_X
+	sta BULL_X
+	lda SHIP_Y
+	sec
+	sbc #1			; spawn just above ship nose
+	sta BULL_Y
+	lda #1
+	sta BULL_ACT
 	rts
 
 .tryJoystick
@@ -189,6 +216,85 @@ ReadInput SUBROUTINE
 	adc #3
 	sta SHIP_Y
 .done
+	rts
+
+; ==============================
+;     Process Bullet
+; ==============================
+ProcessBullet SUBROUTINE
+	lda BULL_ACT
+	beq .done		; no bullet active
+
+	; Erase bullet at current position
+	jsr EraseBullet
+
+	; Move bullet up
+	lda BULL_Y
+	sec
+	sbc #BULLET_SPEED
+	bcc .deactivate	; went past top of screen
+	sta BULL_Y
+
+	; Draw bullet at new position
+	jsr DrawBullet
+	rts
+
+.deactivate
+	lda #0
+	sta BULL_ACT
+.done
+	rts
+
+; ==============================
+;       Draw Bullet
+; ==============================
+DrawBullet SUBROUTINE
+	ldx #3			; 3 rows tall
+.loop
+	txa
+	pha
+	dex
+	txa
+	clc
+	adc BULL_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy BULL_X
+	lda #$08		; center pixel (bit 3)
+	ora (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	pla
+	tax
+	dex
+	bne .loop
+	rts
+
+; ==============================
+;       Erase Bullet
+; ==============================
+EraseBullet SUBROUTINE
+	ldx #3			; 3 rows tall
+.loop
+	txa
+	pha
+	dex
+	txa
+	clc
+	adc BULL_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy BULL_X
+	lda #$F7		; ~$08, clear bit 3
+	and (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	pla
+	tax
+	dex
+	bne .loop
 	rts
 
 ; ==============================

@@ -9,18 +9,29 @@ STAR_IDX = $05	; current star index
 SEED	= $06	; PRNG state
 TEMP_HI	= $07	; scaling temp high byte
 TEMP_LO	= $08	; scaling temp low byte
+SHIP_X	= $09	; ship byte column (0-38)
+SHIP_Y	= $0A	; ship top pixel row (0-186)
+SHIP_ROW = $0B	; temp: current sprite row being drawn
 
 ; --- Soft Switches ---
 TXTCLR	= $C050		; enable graphics
 MIXCLR	= $C052		; full screen (no mixed text)
 TXTPAGE2 = $C055	; display page 2
 HIRES	= $C057		; enable hires
+KBD	= $C000		; keyboard data (bit 7 = key available)
+KBDSTRB	= $C010		; keyboard strobe (read to clear)
+PADDL0	= $C064		; paddle 0 (X axis)
+PADDL1	= $C065		; paddle 1 (Y axis)
+PTRIG	= $C070		; paddle trigger
 
 ; --- Constants ---
 HGRBASE	= $40		; HGR page 2 high byte
 NUM_STARS = 42		; number of stars
 CENTER_X = 20		; screen center byte column
 CENTER_Y = 96		; screen center pixel row
+SHIP_START_X = 18	; ship initial X
+SHIP_START_Y = 150	; ship initial Y
+SHIP_HEIGHT = 5		; ship sprite height in rows
 
 	org $803
 
@@ -34,6 +45,13 @@ ThirdOff
 
 BitMasks
 	.byte $01, $02, $04, $08, $10, $20, $40
+
+ShipSprite
+	.byte $08	; ...X...
+	.byte $1C	; ..XXX..
+	.byte $3E	; .XXXXX.
+	.byte $14	; ..X.X..
+	.byte $14	; ..X.X..
 
 ; --- Star state arrays (8.8 fixed-point offsets from center) ---
 StarsDXL ds NUM_STARS	; X offset fractional part
@@ -53,6 +71,11 @@ Start SUBROUTINE
 	lda #$A5
 	sta SEED
 
+	lda #SHIP_START_X
+	sta SHIP_X
+	lda #SHIP_START_Y
+	sta SHIP_Y
+
 	jsr ClearHGR
 	jsr InitAllStars
 
@@ -68,7 +91,156 @@ MainLoop SUBROUTINE
 	lda STAR_IDX
 	cmp #NUM_STARS
 	bne .starLoop
+
+	jsr EraseShip
+	jsr ReadInput
+	jsr DrawShip
+
 	jmp MainLoop
+
+; ==============================
+;       Read Input
+; ==============================
+ReadInput SUBROUTINE
+	; Check keyboard
+	lda KBD
+	bpl .noKey		; bpl .tryJoystick
+	sta KBDSTRB
+	cmp #$8B		; up arrow
+	beq .up
+	cmp #$8A		; down arrow
+	beq .down
+	cmp #$88		; left arrow
+	beq .left
+	cmp #$95		; right arrow
+	beq .right
+.noKey
+	rts
+
+.tryJoystick
+	; Read paddle 0 (X axis)
+	lda PTRIG
+	ldy #0
+.pdl0
+	lda PADDL0
+	bpl .pdl0Done
+	iny
+	bne .pdl0
+.pdl0Done
+	cpy #240		; no joystick connected
+	bcs .readY
+	cpy #80
+	bcc .joyLeft
+	cpy #176
+	bcs .joyRight
+	jmp .readY
+.joyLeft
+	lda SHIP_X
+	beq .readY
+	dec SHIP_X
+	jmp .readY
+.joyRight
+	lda SHIP_X
+	cmp #38
+	bcs .readY
+	inc SHIP_X
+.readY
+	; Read paddle 1 (Y axis)
+	lda PTRIG
+	ldy #0
+.pdl1
+	lda PADDL1
+	bpl .pdl1Done
+	iny
+	bne .pdl1
+.pdl1Done
+	cpy #240
+	bcs .done
+	cpy #80
+	bcc .up
+	cpy #176
+	bcs .down
+	rts
+
+.left
+	lda SHIP_X
+	beq .done
+	dec SHIP_X
+	rts
+.right
+	lda SHIP_X
+	cmp #38
+	bcs .done
+	inc SHIP_X
+	rts
+.up
+	lda SHIP_Y
+	cmp #3
+	bcc .done
+	sec
+	sbc #3
+	sta SHIP_Y
+	rts
+.down
+	lda SHIP_Y
+	cmp #183
+	bcs .done
+	clc
+	adc #3
+	sta SHIP_Y
+.done
+	rts
+
+; ==============================
+;       Draw Ship
+; ==============================
+DrawShip SUBROUTINE
+	lda #0
+	sta SHIP_ROW
+.loop
+	lda SHIP_ROW
+	clc
+	adc SHIP_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy SHIP_X
+	ldx SHIP_ROW
+	lda ShipSprite,x
+	ora (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	inc SHIP_ROW
+	lda SHIP_ROW
+	cmp #SHIP_HEIGHT
+	bne .loop
+	rts
+
+; ==============================
+;       Erase Ship
+; ==============================
+EraseShip SUBROUTINE
+	lda #0
+	sta SHIP_ROW
+.loop
+	lda SHIP_ROW
+	clc
+	adc SHIP_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy SHIP_X
+	ldx SHIP_ROW
+	lda ShipSprite,x
+	eor #$FF
+	and (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	inc SHIP_ROW
+	lda SHIP_ROW
+	cmp #SHIP_HEIGHT
+	bne .loop
+	rts
 
 ; ==============================
 ;       Process One Star
@@ -205,7 +377,7 @@ InitAllStars SUBROUTINE
 ; ==============================
 ;   Init Star (wide spread)
 ; ==============================
-; For initial distribution: DX ±(1-18), DY ±(1-90)
+; For initial distribution: DX +/-(1-18), DY +/-(1-90)
 ; Stars pre-spread across full screen
 InitStarWide SUBROUTINE
 	ldx STAR_IDX
@@ -213,7 +385,7 @@ InitStarWide SUBROUTINE
 	sta StarsDXL,x
 	jsr Random
 	sta StarsDYL,x
-	; DX_hi = ±(1-18)
+	; DX_hi = +/-(1-18)
 	jsr Random
 	pha
 	and #$0F
@@ -227,7 +399,7 @@ InitStarWide SUBROUTINE
 	sbc StarsDXH,x
 	sta StarsDXH,x
 .dxPos
-	; DY_hi = ±(1-90) — full screen coverage
+	; DY_hi = +/-(1-90) -- full screen coverage
 	jsr Random
 	pha
 	and #$3F
@@ -259,14 +431,14 @@ InitStarWide SUBROUTINE
 ;   Respawn Star (near center)
 ; ==============================
 ; For respawn: small offsets so stars emerge from center
-; DX ±(1-4), DY ±(5-20)
+; DX +/-(1-4), DY +/-(5-20)
 RespawnStar SUBROUTINE
 	ldx STAR_IDX
 	jsr Random
 	sta StarsDXL,x
 	jsr Random
 	sta StarsDYL,x
-	; DX_hi = ±(1-4)
+	; DX_hi = +/-(1-4)
 	jsr Random
 	pha
 	and #$03
@@ -280,7 +452,7 @@ RespawnStar SUBROUTINE
 	sbc StarsDXH,x
 	sta StarsDXH,x
 .dxPos
-	; DY_hi = ±(5-20)
+	; DY_hi = +/-(5-20)
 	jsr Random
 	pha
 	and #$0F

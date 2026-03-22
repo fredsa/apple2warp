@@ -4,26 +4,32 @@ ThirdOff
 BitMasks
 	.byte $01, $02, $04, $08, $10, $20, $40
 
+;;{w:8,h:5};;
 ShipSprite
-	.byte $08	; ...X...
-	.byte $1C	; ..XXX..
-	.byte $3E	; .XXXXX.
-	.byte $14	; ..X.X..
-	.byte $14	; ..X.X..
+	.byte $18
+	.byte $3C
+	.byte $7E
+	.byte $FF
+	.byte $66
+;;
 
+;;{w:8,h:5};;
 EnemySprite
-	.byte $22	; .X...X.
-	.byte $3E	; .XXXXX.
-	.byte $1C	; ..XXX..
-	.byte $3E	; .XXXXX.
-	.byte $22	; .X...X.
+	.byte $22
+	.byte $3E
+	.byte $1C
+	.byte $3E
+	.byte $22
+;;
 
+;;{w:8,h:5};;
 EnemySprite2
-	.byte $14	; ..X.X..
-	.byte $08	; ...X...
-	.byte $3E	; .XXXXX.
-	.byte $08	; ...X...
-	.byte $14	; ..X.X..
+	.byte $14
+	.byte $08
+	.byte $3E
+	.byte $08
+	.byte $14
+;;
 
 ; --- Star state arrays (8.8 fixed-point offsets from center) ---
 StarsDXL ds NUM_STARS	; X offset fractional part

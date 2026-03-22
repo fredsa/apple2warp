@@ -11,6 +11,13 @@ ShipSprite
 	.byte $14	; ..X.X..
 	.byte $14	; ..X.X..
 
+EnemySprite
+	.byte $22	; .X...X.
+	.byte $3E	; .XXXXX.
+	.byte $1C	; ..XXX..
+	.byte $3E	; .XXXXX.
+	.byte $22	; .X...X.
+
 ; --- Star state arrays (8.8 fixed-point offsets from center) ---
 StarsDXL ds NUM_STARS	; X offset fractional part
 StarsDXH ds NUM_STARS	; X offset integer part (signed, byte columns)

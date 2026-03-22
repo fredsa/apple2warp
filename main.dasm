@@ -33,6 +33,7 @@ Start SUBROUTINE
 
 	jsr ClearHGR
 	jsr InitAllStars
+	jsr InitEnemy
 
 ; ==============================
 ;         Main Loop
@@ -48,6 +49,8 @@ MainLoop SUBROUTINE
 	bne .starLoop
 
 	jsr ProcessBullet
+	jsr ProcessEnemy
+	jsr CheckCollisions
 	jsr EraseShip
 	jsr ReadInput
 	jsr DrawShip
@@ -58,3 +61,4 @@ MainLoop SUBROUTINE
         include "stars.dasm"
         include "ship.dasm"
         include "input.dasm"
+        include "enemies.dasm"

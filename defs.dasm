@@ -13,6 +13,10 @@ SHIP_ROW = $0B	; temp: current sprite row being drawn
 BULL_X	 = $0C	; bullet byte column
 BULL_Y	 = $0D	; bullet pixel row
 BULL_ACT = $0E	; bullet active flag (0=inactive)
+ENEM_X	 = $0F	; enemy byte column
+ENEM_Y	 = $10	; enemy pixel row
+ENEM_ACT = $11	; enemy active flag
+ENEM_DIR = $12	; enemy horizontal direction
 
 ; --- Soft Switches ---
 TXTCLR	 = $C050  ; enable graphics
@@ -34,3 +38,4 @@ SHIP_START_X = 18   ; ship initial X
 SHIP_START_Y = 150  ; ship initial Y
 SHIP_HEIGHT  = 5    ; ship sprite height in rows
 BULLET_SPEED = 4    ; pixels per frame
+ENEM_HEIGHT  = 5    ; enemy sprite height

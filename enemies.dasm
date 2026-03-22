@@ -1,0 +1,147 @@
+; ==============================
+;      Enemy Management
+; ==============================
+
+InitEnemy SUBROUTINE
+	lda #0
+	sta ENEM_ACT
+	rts
+
+SpawnEnemy SUBROUTINE
+	jsr Random
+	and #$1F
+	clc
+	adc #4
+	sta ENEM_X
+	lda #0
+	sta ENEM_Y
+	lda #1
+	sta ENEM_ACT
+	jsr Random
+	and #$01
+	beq .left
+	lda #1
+	sta ENEM_DIR
+	rts
+.left
+	lda #$FF
+	sta ENEM_DIR
+	rts
+
+ProcessEnemy SUBROUTINE
+	lda ENEM_ACT
+	beq .trySpawn
+
+	jsr EraseEnemy
+
+	; Move X
+	lda ENEM_X
+	clc
+	adc ENEM_DIR
+	cmp #40
+	bcs .respawn
+	sta ENEM_X
+
+	; Move Y
+	inc ENEM_Y
+	lda ENEM_Y
+	cmp #180
+	bcs .respawn
+
+	jsr DrawEnemy
+	rts
+
+.respawn
+	lda #0
+	sta ENEM_ACT
+	rts
+
+.trySpawn
+	jsr Random
+	cmp #$08	; small chance to spawn
+	bcs .noSpawn
+	jsr SpawnEnemy
+.noSpawn
+	rts
+
+; ==============================
+;       Draw Enemy
+; ==============================
+DrawEnemy SUBROUTINE
+	lda #0
+	sta SHIP_ROW	; reuse SHIP_ROW as temp
+.loop
+	lda SHIP_ROW
+	clc
+	adc ENEM_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy ENEM_X
+	ldx SHIP_ROW
+	lda EnemySprite,x
+	ora (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	inc SHIP_ROW
+	lda SHIP_ROW
+	cmp #ENEM_HEIGHT
+	bne .loop
+	rts
+
+; ==============================
+;       Erase Enemy
+; ==============================
+EraseEnemy SUBROUTINE
+	lda #0
+	sta SHIP_ROW
+.loop
+	lda SHIP_ROW
+	clc
+	adc ENEM_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy ENEM_X
+	ldx SHIP_ROW
+	lda EnemySprite,x
+	eor #$FF
+	and (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	inc SHIP_ROW
+	lda SHIP_ROW
+	cmp #ENEM_HEIGHT
+	bne .loop
+	rts
+
+; ==============================
+;      Check Collisions
+; ==============================
+CheckCollisions SUBROUTINE
+	lda BULL_ACT
+	beq .done
+	lda ENEM_ACT
+	beq .done
+
+	; Check X
+	lda BULL_X
+	cmp ENEM_X
+	bne .done
+
+	; Check Y
+	lda BULL_Y
+	sec
+	sbc ENEM_Y
+	bcc .done	; BULL_Y < ENEM_Y
+	cmp #ENEM_HEIGHT
+	bcs .done	; BULL_Y >= ENEM_Y + ENEM_HEIGHT
+
+	; Hit!
+	jsr EraseEnemy
+	jsr EraseBullet
+	lda #0
+	sta ENEM_ACT
+	sta BULL_ACT
+.done
+	rts

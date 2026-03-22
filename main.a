@@ -1,41 +1,41 @@
-	processor 6502
+        processor 6502
 
 ; --- Zero Page Variables ---
-STAR_X	= $00	; current star screen X (byte column)
-STAR_Y	= $01	; current star screen Y (pixel row)
-HGRPTR	= $02	; pointer for HGR memory (lo, hi)
-ROWTEMP	= $04	; temp for row calculation
+STAR_X	 = $00	; current star screen X (byte column)
+STAR_Y	 = $01	; current star screen Y (pixel row)
+HGRPTR	 = $02	; pointer for HGR memory (lo, hi)
+ROWTEMP	 = $04	; temp for row calculation
 STAR_IDX = $05	; current star index
-SEED	= $06	; PRNG state
-TEMP_HI	= $07	; scaling temp high byte
-TEMP_LO	= $08	; scaling temp low byte
-SHIP_X	= $09	; ship byte column (0-38)
-SHIP_Y	= $0A	; ship top pixel row (0-186)
+SEED	 = $06	; PRNG state
+TEMP_HI	 = $07	; scaling temp high byte
+TEMP_LO	 = $08	; scaling temp low byte
+SHIP_X	 = $09	; ship byte column (0-38)
+SHIP_Y	 = $0A	; ship top pixel row (0-186)
 SHIP_ROW = $0B	; temp: current sprite row being drawn
-BULL_X	= $0C	; bullet byte column
-BULL_Y	= $0D	; bullet pixel row
+BULL_X	 = $0C	; bullet byte column
+BULL_Y	 = $0D	; bullet pixel row
 BULL_ACT = $0E	; bullet active flag (0=inactive)
 
 ; --- Soft Switches ---
-TXTCLR	= $C050		; enable graphics
-MIXCLR	= $C052		; full screen (no mixed text)
-TXTPAGE2 = $C055	; display page 2
-HIRES	= $C057		; enable hires
-KBD	= $C000		; keyboard data (bit 7 = key available)
-KBDSTRB	= $C010		; keyboard strobe (read to clear)
-PADDL0	= $C064		; paddle 0 (X axis)
-PADDL1	= $C065		; paddle 1 (Y axis)
-PTRIG	= $C070		; paddle trigger
+TXTCLR	 = $C050  ; enable graphics
+MIXCLR	 = $C052  ; full screen (no mixed text)
+TXTPAGE2 = $C055  ; display page 2
+HIRES	 = $C057  ; enable hires
+KBD	 = $C000  ; keyboard data (bit 7 = key available)
+KBDSTRB	 = $C010  ; keyboard strobe (read to clear)
+PADDL0	 = $C064  ; paddle 0 (X axis)
+PADDL1	 = $C065  ; paddle 1 (Y axis)
+PTRIG	 = $C070  ; paddle trigger
 
 ; --- Constants ---
-HGRBASE	= $40		; HGR page 2 high byte
-NUM_STARS = 42		; number of stars
-CENTER_X = 20		; screen center byte column
-CENTER_Y = 96		; screen center pixel row
-SHIP_START_X = 18	; ship initial X
-SHIP_START_Y = 150	; ship initial Y
-SHIP_HEIGHT = 5		; ship sprite height in rows
-BULLET_SPEED = 4	; pixels per frame
+HGRBASE	     = $40  ; HGR page 2 high byte
+NUM_STARS    = 42   ; number of stars
+CENTER_X     = 20   ; screen center byte column
+CENTER_Y     = 96   ; screen center pixel row
+SHIP_START_X = 18   ; ship initial X
+SHIP_START_Y = 150  ; ship initial Y
+SHIP_HEIGHT  = 5    ; ship sprite height in rows
+BULLET_SPEED = 4    ; pixels per frame
 
 	org $803
 

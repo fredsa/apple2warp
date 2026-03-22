@@ -39,6 +39,7 @@ Start SUBROUTINE
 ;         Main Loop
 ; ==============================
 MainLoop SUBROUTINE
+	inc FRAME_COUNT
 	lda #0
 	sta STAR_IDX
 .starLoop
@@ -49,7 +50,11 @@ MainLoop SUBROUTINE
 	bne .starLoop
 
 	jsr ProcessBullet
+	ldx #NUM_ENEMIES-1
+.enemLoop
 	jsr ProcessEnemy
+	dex
+	bpl .enemLoop
 	jsr CheckCollisions
 	jsr EraseShip
 	jsr ReadInput

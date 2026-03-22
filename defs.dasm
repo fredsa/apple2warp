@@ -13,10 +13,22 @@ SHIP_ROW = $0B	; temp: current sprite row being drawn
 BULL_X	 = $0C	; bullet byte column
 BULL_Y	 = $0D	; bullet pixel row
 BULL_ACT = $0E	; bullet active flag (0=inactive)
-ENEM_X	 = $0F	; enemy byte column
-ENEM_Y	 = $10	; enemy pixel row
-ENEM_ACT = $11	; enemy active flag
-ENEM_DIR = $12	; enemy horizontal direction
+NUM_ENEMIES = 4
+ENEM_X	 = $10	; enemy byte columns (4 bytes)
+ENEM_Y	 = $14	; enemy pixel rows (4 bytes)
+ENEM_ACT = $18	; enemy active flags (4 bytes)
+ENEM_DIR = $1C	; enemy horizontal directions (4 bytes)
+ENEM_XT	 = $20	; temp X for current alien
+ENEM_YT	 = $21	; temp Y for current alien
+ENEM_IDX = $22	; current enemy index
+ENEM_XL  = $23  ; enemy fractional X (4 bytes)
+ENEM_YL  = $27  ; enemy fractional Y (4 bytes)
+FRAME_COUNT = $2B
+ENEM_DXL = $2C  ; enemy horizontal velocity fractional (4 bytes)
+ENEM_DXH = $30  ; enemy horizontal velocity integer (4 bytes)
+ENEM_DYL = $34  ; enemy vertical velocity fractional (4 bytes)
+ENEM_DYH = $38  ; enemy vertical velocity integer (4 bytes)
+ENEM_TYPE = $3C ; enemy type (4 bytes)
 
 ; --- Soft Switches ---
 TXTCLR	 = $C050  ; enable graphics

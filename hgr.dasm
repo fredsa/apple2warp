@@ -1,0 +1,64 @@
+; ==============================
+;      Clear HGR Page 2
+; ==============================
+ClearHGR SUBROUTINE
+	lda #0
+	sta HGRPTR
+	lda #HGRBASE
+	sta HGRPTR+1
+	tay
+	lda #0
+.loop
+	sta (HGRPTR),y
+	iny
+	bne .loop
+	inc HGRPTR+1
+	ldx HGRPTR+1
+	cpx #HGRBASE+$20
+	bne .loop
+	rts
+
+; ==============================
+;    Calculate HGR Row Address
+; ==============================
+CalcRowAddr SUBROUTINE
+	sta ROWTEMP
+
+	and #$07
+	asl
+	asl
+	adc #HGRBASE
+	sta HGRPTR+1
+
+	lda ROWTEMP
+	lsr
+	lsr
+	lsr
+	lsr
+	and #$03
+	clc
+	adc HGRPTR+1
+	sta HGRPTR+1
+
+	lda ROWTEMP
+	and #$08
+	beq .noBit3
+	lda #$80
+.noBit3
+	sta HGRPTR
+
+	lda ROWTEMP
+	lsr
+	lsr
+	lsr
+	lsr
+	lsr
+	lsr
+	beq .done
+	tax
+	lda ThirdOff-1,x
+	clc
+	adc HGRPTR
+	sta HGRPTR
+.done
+	rts

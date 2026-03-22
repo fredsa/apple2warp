@@ -1,0 +1,60 @@
+        processor 6502
+
+        include "defs.dasm"
+
+	org $803
+
+; ==============================
+;         Data Tables
+; ==============================
+	jmp Start
+
+        include "data.dasm"
+
+; ==============================
+;         Entry Point
+; ==============================
+Start SUBROUTINE
+	sta TXTCLR
+	sta MIXCLR
+	sta TXTPAGE2
+	sta HIRES
+
+	lda #$A5
+	sta SEED
+
+	lda #SHIP_START_X
+	sta SHIP_X
+	lda #SHIP_START_Y
+	sta SHIP_Y
+
+	lda #0
+	sta BULL_ACT
+
+	jsr ClearHGR
+	jsr InitAllStars
+
+; ==============================
+;         Main Loop
+; ==============================
+MainLoop SUBROUTINE
+	lda #0
+	sta STAR_IDX
+.starLoop
+	jsr ProcessStar
+	inc STAR_IDX
+	lda STAR_IDX
+	cmp #NUM_STARS
+	bne .starLoop
+
+	jsr ProcessBullet
+	jsr EraseShip
+	jsr ReadInput
+	jsr DrawShip
+
+	jmp MainLoop
+
+        include "hgr.dasm"
+        include "stars.dasm"
+        include "ship.dasm"
+        include "input.dasm"

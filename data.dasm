@@ -1,0 +1,18 @@
+ThirdOff
+	.byte $28, $50
+
+BitMasks
+	.byte $01, $02, $04, $08, $10, $20, $40
+
+ShipSprite
+	.byte $08	; ...X...
+	.byte $1C	; ..XXX..
+	.byte $3E	; .XXXXX.
+	.byte $14	; ..X.X..
+	.byte $14	; ..X.X..
+
+; --- Star state arrays (8.8 fixed-point offsets from center) ---
+StarsDXL ds NUM_STARS	; X offset fractional part
+StarsDXH ds NUM_STARS	; X offset integer part (signed, byte columns)
+StarsDYL ds NUM_STARS	; Y offset fractional part
+StarsDYH ds NUM_STARS	; Y offset integer part (signed, pixel rows)

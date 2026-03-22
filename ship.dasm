@@ -1,0 +1,129 @@
+; ==============================
+;     Process Bullet
+; ==============================
+ProcessBullet SUBROUTINE
+	lda BULL_ACT
+	beq .done		; no bullet active
+
+	; Erase bullet at current position
+	jsr EraseBullet
+
+	; Move bullet up
+	lda BULL_Y
+	sec
+	sbc #BULLET_SPEED
+	bcc .deactivate	; went past top of screen
+	sta BULL_Y
+
+	; Draw bullet at new position
+	jsr DrawBullet
+	rts
+
+.deactivate
+	lda #0
+	sta BULL_ACT
+.done
+	rts
+
+; ==============================
+;       Draw Bullet
+; ==============================
+DrawBullet SUBROUTINE
+	ldx #3			; 3 rows tall
+.loop
+	txa
+	pha
+	dex
+	txa
+	clc
+	adc BULL_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy BULL_X
+	lda #$08		; center pixel (bit 3)
+	ora (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	pla
+	tax
+	dex
+	bne .loop
+	rts
+
+; ==============================
+;       Erase Bullet
+; ==============================
+EraseBullet SUBROUTINE
+	ldx #3			; 3 rows tall
+.loop
+	txa
+	pha
+	dex
+	txa
+	clc
+	adc BULL_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy BULL_X
+	lda #$F7		; ~$08, clear bit 3
+	and (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	pla
+	tax
+	dex
+	bne .loop
+	rts
+
+; ==============================
+;       Draw Ship
+; ==============================
+DrawShip SUBROUTINE
+	lda #0
+	sta SHIP_ROW
+.loop
+	lda SHIP_ROW
+	clc
+	adc SHIP_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy SHIP_X
+	ldx SHIP_ROW
+	lda ShipSprite,x
+	ora (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	inc SHIP_ROW
+	lda SHIP_ROW
+	cmp #SHIP_HEIGHT
+	bne .loop
+	rts
+
+; ==============================
+;       Erase Ship
+; ==============================
+EraseShip SUBROUTINE
+	lda #0
+	sta SHIP_ROW
+.loop
+	lda SHIP_ROW
+	clc
+	adc SHIP_Y
+	cmp #192
+	bcs .skip
+	jsr CalcRowAddr
+	ldy SHIP_X
+	ldx SHIP_ROW
+	lda ShipSprite,x
+	eor #$FF
+	and (HGRPTR),y
+	sta (HGRPTR),y
+.skip
+	inc SHIP_ROW
+	lda SHIP_ROW
+	cmp #SHIP_HEIGHT
+	bne .loop
+	rts

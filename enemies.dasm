@@ -28,9 +28,13 @@ SpawnEnemy SUBROUTINE
 	lda #1
 	sta ENEM_ACT,x
 
-	; Variety: Type
+	; Variety: Type (0-2)
 	jsr Random
-	and #$01
+	and #$03
+	cmp #3
+	bcc .typeOk
+	lda #2		; clamp to 0-2
+.typeOk
 	sta ENEM_TYPE,x
 
 	; Variety: Horizontal Speed (DX)
@@ -113,7 +117,7 @@ ProcessEnemy SUBROUTINE
 
 .trySpawn
 	jsr Random
-	cmp #$04	; chance per frame
+	cmp #$02	; smaller chance per frame since we have 8 slots
 	bcs .noSpawn
 	jsr SpawnEnemy
 .noSpawn
@@ -137,6 +141,13 @@ DrawEnemy SUBROUTINE
 	ldx ENEM_IDX
 	lda ENEM_TYPE,x
 	beq .type0
+	cmp #1
+	beq .type1
+	; type 2
+	ldx SHIP_ROW
+	lda EnemySprite3,x
+	jmp .draw
+.type1
 	ldx SHIP_ROW
 	lda EnemySprite2,x
 	jmp .draw
@@ -171,6 +182,13 @@ EraseEnemy SUBROUTINE
 	ldx ENEM_IDX
 	lda ENEM_TYPE,x
 	beq .type0
+	cmp #1
+	beq .type1
+	; type 2
+	ldx SHIP_ROW
+	lda EnemySprite3,x
+	jmp .erase
+.type1
 	ldx SHIP_ROW
 	lda EnemySprite2,x
 	jmp .erase

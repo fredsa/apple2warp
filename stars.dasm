@@ -228,12 +228,23 @@ RespawnStar SUBROUTINE
 ;      PRNG (Galois LFSR)
 ; ==============================
 Random SUBROUTINE
-	lda SEED
+	lda SEEDH
 	lsr
+	lda SEEDL
+	ror
+	sta SEEDL
+	lda SEEDH
+	ror
+	sta SEEDH
 	bcc .noTap
-	eor #$B4
+	lda SEEDH
+	eor #$80
+	sta SEEDH
+	lda SEEDL
+	eor #$16	; polynomial $8016
+	sta SEEDL
 .noTap
-	sta SEED
+	lda SEEDL	; return low byte as result
 	rts
 
 ; ==============================

@@ -17,9 +17,28 @@ InitEnemy SUBROUTINE
 SpawnEnemy SUBROUTINE
 	; Index in X
 	jsr Random
-	and #$0F	; 0-15
+	and #$03
+	cmp #3
+	bcc .zoneOk
+	lda #1		; default to center
+.zoneOk
+	cmp #0
+	beq .left
+	cmp #1
+	beq .center
+	lda #29		; right zone base
+	bne .addOffset
+.left
+	lda #5		; left zone base
+	bne .addOffset
+.center
+	lda #17		; center zone base
+.addOffset
+	sta ENEM_XT	; reuse temp
+	jsr Random
+	and #$03
 	clc
-	adc #12		; 12-27
+	adc ENEM_XT
 	sta ENEM_X,x
 	lda #0
 	sta ENEM_XL,x
@@ -39,9 +58,9 @@ SpawnEnemy SUBROUTINE
 
 	; Variety: Horizontal Speed (DX)
 	jsr Random
-	and #$3F	; 0-63
+	and #$1F	; 0-31
 	clc
-	adc #16		; 16-79 fractional part (approx 1/16 to 1/3 byte)
+	adc #4		; 4-35 fractional part
 	sta ENEM_DXL,x
 	lda #0
 	sta ENEM_DXH,x
@@ -63,7 +82,7 @@ SpawnEnemy SUBROUTINE
 	jsr Random
 	and #$3F
 	clc
-	adc #32		; 32-95 fractional part (approx 1/8 to 3/8 pixel)
+	adc #80		; 80-143 fractional part
 	sta ENEM_DYL,x
 	lda #0
 	sta ENEM_DYH,x

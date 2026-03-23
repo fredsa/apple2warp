@@ -21,7 +21,9 @@ Start SUBROUTINE
 	sta HIRES
 
 	lda #$A5
-	sta SEED
+	sta SEEDL
+	lda #$5A
+	sta SEEDH
 
 	lda #SHIP_START_X
 	sta SHIP_X

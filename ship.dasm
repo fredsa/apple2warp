@@ -26,7 +26,7 @@ ProcessBullet SUBROUTINE
 ;       Draw Bullet
 ; ==============================
 DrawBullet SUBROUTINE
-	ldx #3			; 3 rows tall
+	ldx #BULLET_HEIGHT
 .loop
 	txa
 	pha
@@ -52,7 +52,7 @@ DrawBullet SUBROUTINE
 ;       Erase Bullet
 ; ==============================
 EraseBullet SUBROUTINE
-	ldx #3			; 3 rows tall
+	ldx #BULLET_HEIGHT
 .loop
 	txa
 	pha

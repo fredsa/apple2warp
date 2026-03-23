@@ -50,4 +50,5 @@ SHIP_START_X = 18   ; ship initial X
 SHIP_START_Y = 150  ; ship initial Y
 SHIP_HEIGHT  = 5    ; ship sprite height in rows
 BULLET_SPEED = 28    ; pixels per frame
+BULLET_HEIGHT = 12   ; bullet streak length
 ENEM_HEIGHT  = 5    ; enemy sprite height

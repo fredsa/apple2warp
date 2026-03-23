@@ -223,13 +223,14 @@ CheckCollisions SUBROUTINE
 	cmp ENEM_X,x
 	bne .next
 
-	; Check Y
+	; Check Y (swept collision to prevent skipping at high speeds)
 	lda BULL_Y
 	sec
 	sbc ENEM_Y,x
-	bcc .next	; BULL_Y < ENEM_Y
-	cmp #ENEM_HEIGHT
-	bcs .next	; BULL_Y >= ENEM_Y + ENEM_HEIGHT
+	clc
+	adc #BULLET_SPEED
+	cmp #(BULLET_SPEED + ENEM_HEIGHT)
+	bcs .next	; outside hit range
 
 	; Hit!
 	lda ENEM_X,x

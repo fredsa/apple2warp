@@ -12,16 +12,13 @@ ProcessBullet SUBROUTINE
 	lda BULL_Y
 	sec
 	sbc #BULLET_SPEED
-	bcc .deactivate	; went past top of screen
 	sta BULL_Y
 
-	; Draw bullet at new position
+	; Only draw if on screen (0 to 191)
+	cmp #192
+	bcs .skipDraw
 	jsr DrawBullet
-	rts
-
-.deactivate
-	lda #0
-	sta BULL_ACT
+.skipDraw
 .done
 	rts
 

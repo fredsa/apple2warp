@@ -56,6 +56,16 @@ MainLoop SUBROUTINE
 	dex
 	bpl .enemLoop
 	jsr CheckCollisions
+
+	; Bullet cleanup: deactivate if off-screen (Y >= 192)
+	lda BULL_ACT
+	beq .noKill
+	lda BULL_Y
+	cmp #192
+	bcc .noKill
+	lda #0
+	sta BULL_ACT
+.noKill
 	jsr EraseShip
 	jsr ReadInput
 	jsr DrawShip

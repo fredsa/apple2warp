@@ -49,5 +49,5 @@ CENTER_Y     = 96   ; screen center pixel row
 SHIP_START_X = 18   ; ship initial X
 SHIP_START_Y = 150  ; ship initial Y
 SHIP_HEIGHT  = 5    ; ship sprite height in rows
-BULLET_SPEED = 8    ; pixels per frame
+BULLET_SPEED = 28    ; pixels per frame
 ENEM_HEIGHT  = 5    ; enemy sprite height

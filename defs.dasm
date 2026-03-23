@@ -18,6 +18,7 @@ ENEM_IDX    = $10	; current enemy index
 ENEM_XT     = $11	; temp X for current alien
 ENEM_YT     = $12	; temp Y for current alien
 FRAME_COUNT = $13
+SCORE       = $14   ; 2 bytes (BCD)
 NUM_ENEMIES = 8
 ; Enemy state arrays (8 bytes each)
 ENEM_X      = $30   ; byte columns

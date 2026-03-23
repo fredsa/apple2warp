@@ -32,6 +32,8 @@ Start SUBROUTINE
 
 	lda #0
 	sta BULL_ACT
+	sta SCORE
+	sta SCORE+1
 
 	jsr ClearHGR
 	jsr InitAllStars
@@ -58,6 +60,7 @@ MainLoop SUBROUTINE
 	dex
 	bpl .enemLoop
 	jsr CheckCollisions
+	jsr DrawScore
 
 	; Bullet cleanup: deactivate if off-screen (Y >= 192)
 	lda BULL_ACT

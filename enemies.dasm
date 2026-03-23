@@ -252,6 +252,16 @@ CheckCollisions SUBROUTINE
 	bcs .next	; outside hit range
 
 	; Hit!
+	sed		; decimal mode
+	lda SCORE
+	clc
+	adc #$10	; 10 points
+	sta SCORE
+	lda SCORE+1
+	adc #0
+	sta SCORE+1
+	cld		; back to binary
+
 	lda ENEM_X,x
 	sta ENEM_XT
 	lda ENEM_Y,x
@@ -269,4 +279,77 @@ CheckCollisions SUBROUTINE
 	dex
 	bpl .loop
 .done
+	rts
+
+; ==============================
+;       Draw Score
+; ==============================
+DrawScore SUBROUTINE
+	; 4 digits: SCORE+1 (HI then LO), SCORE (HI then LO)
+	lda #1		; X column (byte)
+	sta ENEM_XT
+	lda #2		; Y pixel row
+	sta ENEM_YT
+
+	; Digit 1 (1000s)
+	lda SCORE+1
+	lsr
+	lsr
+	lsr
+	lsr
+	jsr DrawDigit
+	inc ENEM_XT
+
+	; Digit 2 (100s)
+	lda SCORE+1
+	and #$0F
+	jsr DrawDigit
+	inc ENEM_XT
+
+	; Digit 3 (10s)
+	lda SCORE
+	lsr
+	lsr
+	lsr
+	lsr
+	jsr DrawDigit
+	inc ENEM_XT
+
+	; Digit 4 (1s)
+	lda SCORE
+	and #$0F
+	jsr DrawDigit
+	rts
+
+; Draw digit in A at ENEM_XT, ENEM_YT
+DrawDigit SUBROUTINE
+	; A = digit (0-9)
+	; ENEM_XT, ENEM_YT = pos
+	sta TEMP_LO
+	asl
+	asl
+	clc
+	adc TEMP_LO ; A*5
+	sta TEMP_HI	; Base offset
+	
+	lda #0
+	sta SHIP_ROW
+.loop
+	lda SHIP_ROW
+	clc
+	adc ENEM_YT
+	jsr CalcRowAddr
+	
+	ldy ENEM_XT
+	lda SHIP_ROW
+	clc
+	adc TEMP_HI
+	tax
+	lda DigitSprites,x
+	sta (HGRPTR),y ; simple overwrite for score
+	
+	inc SHIP_ROW
+	lda SHIP_ROW
+	cmp #5
+	bne .loop
 	rts

@@ -29,7 +29,6 @@ EnemySprite2
 	.byte $3E
 	.byte $08
 	.byte $08
-	.byte $14
 ;;
 
 ;;{w:8,h:5};;
@@ -39,6 +38,20 @@ EnemySprite3
 	.byte $2A	; .X.X.X.
 	.byte $3E	; .XXXXX.
 	.byte $08	; ...X...
+;;
+
+;;{w:8,h:5,count:10};;
+DigitSprites
+	.byte $3C, $24, $24, $24, $3C ; 0
+	.byte $18, $14, $10, $10, $3C ; 1
+	.byte $1E, $10, $1E, $10, $1E ; 2
+	.byte $3C, $20, $3C, $20, $3C ; 3
+	.byte $24, $24, $3C, $20, $20 ; 4
+	.byte $3C, $04, $3C, $20, $3C ; 5
+	.byte $3C, $04, $3C, $24, $3C ; 6
+	.byte $3C, $20, $20, $20, $20 ; 7
+	.byte $3C, $24, $3C, $24, $3C ; 8
+	.byte $3C, $24, $3C, $20, $20 ; 9
 ;;
 
 ; --- Star state arrays (8.8 fixed-point offsets from center) ---

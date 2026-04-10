@@ -33,6 +33,7 @@ ENEM_DYH    = $70   ; vertical velocity integer
 ENEM_TYPE   = $78   ; enemy type (0-2)
 SND_FREQ    = $80   ; sound frequency (delay)
 SND_DUR     = $81   ; sound duration (cycles)
+LIVES       = $82   ; player lives
 
 ; --- Soft Switches ---
 TXTCLR	 = $C050  ; enable graphics

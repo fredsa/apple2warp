@@ -34,6 +34,8 @@ Start SUBROUTINE
 	sta BULL_ACT
 	sta SCORE
 	sta SCORE+1
+	lda #3
+	sta LIVES
 
 	jsr ClearHGR
 	jsr InitAllStars
@@ -60,6 +62,7 @@ MainLoop SUBROUTINE
 	dex
 	bpl .enemLoop
 	jsr CheckCollisions
+	jsr CheckShipCollision
 	jsr DrawScore
 
 	; Bullet cleanup: deactivate if off-screen (Y >= 192)

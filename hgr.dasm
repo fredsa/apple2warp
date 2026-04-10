@@ -6,7 +6,7 @@ ClearHGR SUBROUTINE
 	sta HGRPTR
 	lda #HGRBASE
 	sta HGRPTR+1
-	tay
+	ldy #0
 	lda #0
 .loop
 	sta (HGRPTR),y

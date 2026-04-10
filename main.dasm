@@ -82,3 +82,4 @@ MainLoop SUBROUTINE
         include "ship.dasm"
         include "input.dasm"
         include "enemies.dasm"
+        include "sound.dasm"

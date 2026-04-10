@@ -31,6 +31,8 @@ ENEM_DXH    = $60   ; horizontal velocity integer
 ENEM_DYL    = $68   ; vertical velocity fractional
 ENEM_DYH    = $70   ; vertical velocity integer
 ENEM_TYPE   = $78   ; enemy type (0-2)
+SND_FREQ    = $80   ; sound frequency (delay)
+SND_DUR     = $81   ; sound duration (cycles)
 
 ; --- Soft Switches ---
 TXTCLR	 = $C050  ; enable graphics
@@ -42,6 +44,7 @@ KBDSTRB	 = $C010  ; keyboard strobe (read to clear)
 PADDL0	 = $C064  ; paddle 0 (X axis)
 PADDL1	 = $C065  ; paddle 1 (Y axis)
 PTRIG	 = $C070  ; paddle trigger
+SPEAKER	 = $C030  ; speaker toggle
 
 ; --- Constants ---
 HGRBASE	     = $40  ; HGR page 2 high byte

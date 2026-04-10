@@ -34,6 +34,7 @@ ReadInput SUBROUTINE
 	sta BULL_Y
 	lda #1
 	sta BULL_ACT
+	jsr SndFire
 	rts
 
 .tryJoystick

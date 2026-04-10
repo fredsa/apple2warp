@@ -268,6 +268,7 @@ CheckCollisions SUBROUTINE
 	sta ENEM_YT
 	jsr EraseEnemy
 	jsr EraseBullet
+	jsr SndHit
 	ldx ENEM_IDX
 	lda #0
 	sta ENEM_ACT,x

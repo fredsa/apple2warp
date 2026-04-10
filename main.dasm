@@ -7,19 +7,62 @@
 ; ==============================
 ;         Data Tables
 ; ==============================
-	jmp Start
+	jmp GameOver
 
         include "data.dasm"
 
 ; ==============================
-;         Entry Point
+;       Game Over Screen
 ; ==============================
-Start SUBROUTINE
+GameOver SUBROUTINE
 	sta TXTCLR
 	sta MIXCLR
 	sta TXTPAGE2
 	sta HIRES
 
+	jsr ClearHGR
+
+	; Draw "GAME OVER" at row 80, column 15
+	lda #<GameOverBmp
+	sta BMPPTR
+	lda #>GameOverBmp
+	sta BMPPTR+1
+	lda #80
+	sta BMP_Y
+	lda #15
+	sta BMP_X
+	lda #GAMEOVER_COLS
+	sta BMP_W
+	lda #GAMEOVER_ROWS
+	sta BMP_H
+	jsr DrawBitmap
+
+	; Draw "PRESS ANY KEY" at row 110, column 13
+	lda #<PressKeyBmp
+	sta BMPPTR
+	lda #>PressKeyBmp
+	sta BMPPTR+1
+	lda #110
+	sta BMP_Y
+	lda #13
+	sta BMP_X
+	lda #PRESSKEY_COLS
+	sta BMP_W
+	lda #PRESSKEY_ROWS
+	sta BMP_H
+	jsr DrawBitmap
+
+	; Wait for key
+	sta KBDSTRB
+.waitKey
+	lda KBD
+	bpl .waitKey
+	sta KBDSTRB
+
+; ==============================
+;         Start New Game
+; ==============================
+Start SUBROUTINE
 	lda #$A5
 	sta SEEDL
 	lda #$5A

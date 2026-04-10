@@ -34,6 +34,13 @@ ENEM_TYPE   = $78   ; enemy type (0-2)
 SND_FREQ    = $80   ; sound frequency (delay)
 SND_DUR     = $81   ; sound duration (cycles)
 LIVES       = $82   ; player lives
+BMPPTR      = $83   ; bitmap data pointer (lo, hi)
+BMP_X       = $85   ; bitmap screen X column
+BMP_Y       = $86   ; bitmap screen Y row
+BMP_W       = $87   ; bitmap width in columns
+BMP_H       = $88   ; bitmap height in rows
+BMP_ROW     = $89   ; current row counter
+BMP_COL     = $8A   ; current col counter
 
 ; --- Soft Switches ---
 TXTCLR	 = $C050  ; enable graphics
@@ -58,3 +65,7 @@ SHIP_HEIGHT  = 5    ; ship sprite height in rows
 BULLET_SPEED = 28    ; pixels per frame
 BULLET_HEIGHT = 12   ; bullet streak length
 ENEM_HEIGHT  = 5    ; enemy sprite height
+GAMEOVER_COLS = 10  ; "GAME OVER" bitmap columns
+GAMEOVER_ROWS = 5   ; bitmap rows
+PRESSKEY_COLS = 14  ; "PRESS ANY KEY" bitmap columns
+PRESSKEY_ROWS = 5   ; bitmap rows

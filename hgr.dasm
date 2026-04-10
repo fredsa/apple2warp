@@ -62,3 +62,50 @@ CalcRowAddr SUBROUTINE
 	sta HGRPTR
 .done
 	rts
+
+; ==============================
+;     Draw Bitmap to Screen
+; ==============================
+; BMPPTR = source data, BMP_X/Y = position
+; BMP_W = width in cols, BMP_H = height in rows
+DrawBitmap SUBROUTINE
+	lda #0
+	sta BMP_ROW
+.rowLoop
+	lda BMP_ROW
+	clc
+	adc BMP_Y
+	jsr CalcRowAddr
+
+	lda #0
+	sta BMP_COL
+.colLoop
+	ldy BMP_COL
+	lda (BMPPTR),y
+	pha
+	tya
+	clc
+	adc BMP_X
+	tay
+	pla
+	sta (HGRPTR),y
+
+	inc BMP_COL
+	lda BMP_COL
+	cmp BMP_W
+	bne .colLoop
+
+	; Advance BMPPTR by BMP_W
+	lda BMPPTR
+	clc
+	adc BMP_W
+	sta BMPPTR
+	lda BMPPTR+1
+	adc #0
+	sta BMPPTR+1
+
+	inc BMP_ROW
+	lda BMP_ROW
+	cmp BMP_H
+	bne .rowLoop
+	rts

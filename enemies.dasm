@@ -320,7 +320,7 @@ CheckShipCollision SUBROUTINE
 	lda #0
 	sta ENEM_ACT,x
 
-	jsr SndHit
+	jsr SndExplode
 	jsr ShipDeath
 	jmp MainLoop
 
@@ -363,8 +363,8 @@ ShipDeath SUBROUTINE
 	dec LIVES
 	bne .respawn
 
-	; Game over - restart
-	jmp Start
+	; Game over
+	jmp GameOver
 
 .respawn
 	lda #SHIP_START_X

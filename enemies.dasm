@@ -291,24 +291,22 @@ CheckShipCollision SUBROUTINE
 	lda ENEM_ACT,x
 	beq .next
 
-	; Check X overlap: |SHIP_X - ENEM_X| < 2
+	; Check X overlap: |SHIP_X - ENEM_X| <= 1
 	lda SHIP_X
 	sec
 	sbc ENEM_X,x
 	clc
-	adc #1		; shift range so 0 = -1
-	cmp #3		; within -1..+1
+	adc #2		; shift so -2 maps to 0
+	cmp #5		; within -2..+2
 	bcs .next
 
-	; Check Y overlap: enemy bottom > ship top AND enemy top < ship bottom
-	; enemy top = ENEM_Y, enemy bottom = ENEM_Y + ENEM_HEIGHT
-	; ship top = SHIP_Y, ship bottom = SHIP_Y + SHIP_HEIGHT
+	; Check Y overlap
 	lda ENEM_Y,x
 	sec
 	sbc SHIP_Y
 	clc
-	adc #ENEM_HEIGHT
-	cmp #(ENEM_HEIGHT + SHIP_HEIGHT)
+	adc #ENEM_HEIGHT+2	; slightly generous
+	cmp #(ENEM_HEIGHT + SHIP_HEIGHT + 4)
 	bcs .next
 
 	; Ship hit!
@@ -324,7 +322,7 @@ CheckShipCollision SUBROUTINE
 
 	jsr SndHit
 	jsr ShipDeath
-	rts
+	jmp MainLoop
 
 .next
 	dex
@@ -340,15 +338,15 @@ ShipDeath SUBROUTINE
 .flash
 	txa
 	pha
-	jsr EraseShip
-	ldy #$20
+	jsr DrawShip
+	ldy #$80
 .d1	ldx #$FF
 .d2	dex
 	bne .d2
 	dey
 	bne .d1
-	jsr DrawShip
-	ldy #$20
+	jsr EraseShip
+	ldy #$80
 .d3	ldx #$FF
 .d4	dex
 	bne .d4
@@ -446,4 +444,65 @@ DrawDigit SUBROUTINE
 	lda SHIP_ROW
 	cmp #5
 	bne .loop
+	rts
+
+; ==============================
+;       Draw Lives
+; ==============================
+DrawLives SUBROUTINE
+	; Clear all 3 icon slots first
+	lda #36
+	sta ENEM_XT
+	ldx #3
+.clearLoop
+	stx ENEM_IDX
+	lda #0
+	sta SHIP_ROW
+.clearRow
+	lda SHIP_ROW
+	clc
+	adc #2
+	jsr CalcRowAddr
+	ldy ENEM_XT
+	lda #0
+	sta (HGRPTR),y
+	inc SHIP_ROW
+	lda SHIP_ROW
+	cmp #SHIP_HEIGHT
+	bne .clearRow
+	dec ENEM_XT
+	dec ENEM_XT
+	ldx ENEM_IDX
+	dex
+	bne .clearLoop
+
+	; Draw remaining lives
+	lda #36
+	sta ENEM_XT
+	ldx LIVES
+	dex		; show lives-1 (remaining after current)
+	beq .done
+.shipLoop
+	stx ENEM_IDX
+	lda #0
+	sta SHIP_ROW
+.rowLoop
+	lda SHIP_ROW
+	clc
+	adc #2		; Y pixel row 2
+	jsr CalcRowAddr
+	ldy ENEM_XT
+	ldx SHIP_ROW
+	lda ShipSprite,x
+	sta (HGRPTR),y
+	inc SHIP_ROW
+	lda SHIP_ROW
+	cmp #SHIP_HEIGHT
+	bne .rowLoop
+	dec ENEM_XT
+	dec ENEM_XT	; 2 columns apart
+	ldx ENEM_IDX
+	dex
+	bne .shipLoop
+.done
 	rts

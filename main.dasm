@@ -64,6 +64,7 @@ MainLoop SUBROUTINE
 	jsr CheckCollisions
 	jsr CheckShipCollision
 	jsr DrawScore
+	jsr DrawLives
 
 	; Bullet cleanup: deactivate if off-screen (Y >= 192)
 	lda BULL_ACT

@@ -1,0 +1,117 @@
+; ==============================
+;       Sound Effects
+; ==============================
+
+; General-purpose tone: SND_FREQ = delay, SND_DUR = cycles
+PlayTone SUBROUTINE
+.loop
+	lda SPEAKER
+	ldy SND_FREQ
+.delay
+	dey
+	bne .delay
+	dec SND_DUR
+	bne .loop
+	rts
+
+; ==============================
+;     Fire Sound (short zap)
+; ==============================
+SndFire SUBROUTINE
+	lda #8
+	sta SND_FREQ
+	lda #30
+	sta SND_DUR
+	jsr PlayTone
+	rts
+
+; ==============================
+;  Hit Sound (descending boom)
+; ==============================
+SndHit SUBROUTINE
+	lda #4
+	sta SND_FREQ
+	lda #60
+	sta SND_DUR
+.loop
+	lda SPEAKER
+	ldy SND_FREQ
+.delay
+	dey
+	bne .delay
+	; Increase frequency (lower pitch) over time
+	lda SND_DUR
+	and #$03
+	bne .noInc
+	inc SND_FREQ
+.noInc
+	dec SND_DUR
+	bne .loop
+	rts
+
+; ==============================
+;  Explosion (ship destroyed)
+; ==============================
+SndExplode SUBROUTINE
+	; Phase 1: harsh high-frequency burst
+	lda #2
+	sta SND_FREQ
+	lda #80
+	sta SND_DUR
+.burst
+	jsr Random
+	and #$03
+	clc
+	adc SND_FREQ
+	tay
+.bd
+	dey
+	bne .bd
+	lda SPEAKER
+	dec SND_DUR
+	bne .burst
+
+	; Phase 2: descending rumble
+	lda #6
+	sta SND_FREQ
+	lda #120
+	sta SND_DUR
+.rumble
+	lda SPEAKER
+	ldy SND_FREQ
+	jsr Random
+	and #$07
+	clc
+	adc SND_FREQ
+	tay
+.rd
+	dey
+	bne .rd
+	; Slow down over time
+	lda SND_DUR
+	and #$03
+	bne .noSlow
+	inc SND_FREQ
+.noSlow
+	dec SND_DUR
+	bne .rumble
+
+	; Phase 3: low fading rumble
+	lda #30
+	sta SND_FREQ
+	lda #60
+	sta SND_DUR
+.fade
+	lda SPEAKER
+	jsr Random
+	and #$0F
+	clc
+	adc SND_FREQ
+	tay
+.fd
+	dey
+	bne .fd
+	inc SND_FREQ
+	dec SND_DUR
+	bne .fade
+	rts

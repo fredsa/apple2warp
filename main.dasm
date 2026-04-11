@@ -2,7 +2,16 @@
 
         include "defs.dasm"
 
-	org $803
+        ; Applesoft BASIC preamble `42 CALL 2061`
+        ; org $0801
+        ; hex 0B 08       ; $0801  Pointer to next line
+        ; hex 2A 00       ; $0803  42 (line number)
+        ; hex 8C          ; $0805  `CALL`
+        ; hex 32 30 36 31 ; $0806  `2061` ($080D)
+        ; hex 00          ; $080A  EOL
+        ; hex 00 00       ; $080B  No more lines
+
+        org $080d
 
 ; ==============================
 ;         Data Tables

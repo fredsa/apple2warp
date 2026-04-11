@@ -291,22 +291,20 @@ CheckShipCollision SUBROUTINE
 	lda ENEM_ACT,x
 	beq .next
 
-	; Check X overlap: |SHIP_X - ENEM_X| <= 1
+	; Check X overlap: same byte column (both sprites are 1 byte wide)
 	lda SHIP_X
-	sec
-	sbc ENEM_X,x
-	clc
-	adc #2		; shift so -2 maps to 0
-	cmp #5		; within -2..+2
-	bcs .next
+	cmp ENEM_X,x
+	bne .next
 
-	; Check Y overlap
+	; Check Y overlap: ranges [SHIP_Y..+4] and [ENEM_Y..+4] intersect
+	; True when ENEM_Y - SHIP_Y + ENEM_HEIGHT-1 < ENEM_HEIGHT + SHIP_HEIGHT - 1
+	; i.e. |ENEM_Y - SHIP_Y| < 5
 	lda ENEM_Y,x
 	sec
 	sbc SHIP_Y
 	clc
-	adc #ENEM_HEIGHT+2	; slightly generous
-	cmp #(ENEM_HEIGHT + SHIP_HEIGHT + 4)
+	adc #(ENEM_HEIGHT-1)
+	cmp #(ENEM_HEIGHT + SHIP_HEIGHT - 1)
 	bcs .next
 
 	; Ship hit!

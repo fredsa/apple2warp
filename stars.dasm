@@ -133,7 +133,7 @@ InitAllStars SUBROUTINE
 ; ==============================
 ;   Init Star (wide spread)
 ; ==============================
-; For initial distribution: DX +/-(1-18), DY +/-(1-90)
+; For initial distribution: DX +/-(1-16), DY +/-(1-90)
 ; Stars pre-spread across full screen
 InitStarWide SUBROUTINE
 	ldx STAR_IDX

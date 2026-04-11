@@ -136,7 +136,7 @@ ProcessEnemy SUBROUTINE
 
 .trySpawn
 	jsr Random
-	cmp #$02	; smaller chance per frame since we have 8 slots
+	cmp #$02	; smaller chance per frame since we have 12 slots
 	bcs .noSpawn
 	jsr SpawnEnemy
 .noSpawn

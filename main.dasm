@@ -14,13 +14,6 @@
         org $080d
 
 ; ==============================
-;         Data Tables
-; ==============================
-	jmp GameOver
-
-        include "data.dasm"
-
-; ==============================
 ;       Game Over Screen
 ; ==============================
 GameOver SUBROUTINE
@@ -139,3 +132,10 @@ MainLoop SUBROUTINE
         include "input.dasm"
         include "enemies.dasm"
         include "sound.dasm"
+
+; ==============================
+;         Data Tables
+; ==============================
+
+        include "data.dasm"
+

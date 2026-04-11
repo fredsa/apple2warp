@@ -2,111 +2,111 @@
 ;       Read Input
 ; ==============================
 ReadInput SUBROUTINE
-	; Check keyboard
-	lda KBD
-	bpl .noKey		; bpl .tryJoystick
-	sta KBDSTRB
-	cmp #$A0		; space bar
-	beq .fire
-	cmp #$88		; left arrow
-	beq .left
-	cmp #$95		; right arrow
-	beq .right
-	cmp #$8B		; up arrow
-	beq .goUp
-	cmp #$8A		; down arrow
-	beq .goDown
+        ; Check keyboard
+        lda KBD
+        bpl .noKey      ; bpl .tryJoystick
+        sta KBDSTRB
+        cmp #$A0        ; space bar
+        beq .fire
+        cmp #$88        ; left arrow
+        beq .left
+        cmp #$95        ; right arrow
+        beq .right
+        cmp #$8B        ; up arrow
+        beq .goUp
+        cmp #$8A        ; down arrow
+        beq .goDown
 .noKey
-	rts
+        rts
 .goUp
-	jmp .up
+        jmp .up
 .goDown
-	jmp .down
+        jmp .down
 
 .fire
-	lda BULL_ACT
-	bne .noKey		; already active, ignore
-	lda SHIP_X
-	sta BULL_X
-	lda SHIP_Y
-	sec
-	sbc #1			; spawn just above ship nose
-	sta BULL_Y
-	lda #1
-	sta BULL_ACT
-	jsr SndFire
-	rts
+        lda BULL_ACT
+        bne .noKey      ; already active, ignore
+        lda SHIP_X
+        sta BULL_X
+        lda SHIP_Y
+        sec
+        sbc #1          ; spawn just above ship nose
+        sta BULL_Y
+        lda #1
+        sta BULL_ACT
+        jsr SndFire
+        rts
 
 .tryJoystick
-	; Read paddle 0 (X axis)
-	lda PTRIG
-	ldy #0
+        ; Read paddle 0 (X axis)
+        lda PTRIG
+        ldy #0
 .pdl0
-	lda PADDL0
-	bpl .pdl0Done
-	iny
-	bne .pdl0
+        lda PADDL0
+        bpl .pdl0Done
+        iny
+        bne .pdl0
 .pdl0Done
-	cpy #240		; no joystick connected
-	bcs .readY
-	cpy #80
-	bcc .joyLeft
-	cpy #176
-	bcs .joyRight
-	jmp .readY
+        cpy #240        ; no joystick connected
+        bcs .readY
+        cpy #80
+        bcc .joyLeft
+        cpy #176
+        bcs .joyRight
+        jmp .readY
 .joyLeft
-	lda SHIP_X
-	beq .readY
-	dec SHIP_X
-	jmp .readY
+        lda SHIP_X
+        beq .readY
+        dec SHIP_X
+        jmp .readY
 .joyRight
-	lda SHIP_X
-	cmp #38
-	bcs .readY
-	inc SHIP_X
+        lda SHIP_X
+        cmp #38
+        bcs .readY
+        inc SHIP_X
 .readY
-	; Read paddle 1 (Y axis)
-	lda PTRIG
-	ldy #0
+        ; Read paddle 1 (Y axis)
+        lda PTRIG
+        ldy #0
 .pdl1
-	lda PADDL1
-	bpl .pdl1Done
-	iny
-	bne .pdl1
+        lda PADDL1
+        bpl .pdl1Done
+        iny
+        bne .pdl1
 .pdl1Done
-	cpy #240
-	bcs .done
-	cpy #80
-	bcc .up
-	cpy #176
-	bcs .down
-	rts
+        cpy #240
+        bcs .done
+        cpy #80
+        bcc .up
+        cpy #176
+        bcs .down
+        rts
 
 .left
-	lda SHIP_X
-	beq .done
-	dec SHIP_X
-	rts
+        lda SHIP_X
+        beq .done
+        dec SHIP_X
+        rts
 .right
-	lda SHIP_X
-	cmp #38
-	bcs .done
-	inc SHIP_X
-	rts
+        lda SHIP_X
+        cmp #38
+        bcs .done
+        inc SHIP_X
+        rts
 .up
-	lda SHIP_Y
-	cmp #3
-	bcc .done
-	sec
-	sbc #3
-	sta SHIP_Y
-	rts
+        lda SHIP_Y
+        cmp #3
+        bcc .done
+        sec
+        sbc #3
+        sta SHIP_Y
+        rts
 .down
-	lda SHIP_Y
-	cmp #183
-	bcs .done
-	clc
-	adc #3
-	sta SHIP_Y
+        lda SHIP_Y
+        cmp #183
+        bcs .done
+        clc
+        adc #3
+        sta SHIP_Y
 .done
-	rts
+        rts

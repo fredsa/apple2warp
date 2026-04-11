@@ -2,66 +2,66 @@
 ;      Clear HGR Page 2
 ; ==============================
 ClearHGR SUBROUTINE
-	lda #0
-	sta HGRPTR
-	lda #HGRBASE
-	sta HGRPTR+1
-	ldy #0
-	lda #0
+        lda #0
+        sta HGRPTR
+        lda #HGRBASE
+        sta HGRPTR+1
+        ldy #0
+        lda #0
 .loop
-	sta (HGRPTR),y
-	iny
-	bne .loop
-	inc HGRPTR+1
-	ldx HGRPTR+1
-	cpx #HGRBASE+$20
-	bne .loop
-	rts
+        sta (HGRPTR),y
+        iny
+        bne .loop
+        inc HGRPTR+1
+        ldx HGRPTR+1
+        cpx #HGRBASE+$20
+        bne .loop
+        rts
 
 ; ==============================
 ;    Calculate HGR Row Address
 ; ==============================
 CalcRowAddr SUBROUTINE
-	sta ROWTEMP
+        sta ROWTEMP
 
-	and #$07
-	asl
-	asl
-	adc #HGRBASE
-	sta HGRPTR+1
+        and #$07
+        asl
+        asl
+        adc #HGRBASE
+        sta HGRPTR+1
 
-	lda ROWTEMP
-	lsr
-	lsr
-	lsr
-	lsr
-	and #$03
-	clc
-	adc HGRPTR+1
-	sta HGRPTR+1
+        lda ROWTEMP
+        lsr
+        lsr
+        lsr
+        lsr
+        and #$03
+        clc
+        adc HGRPTR+1
+        sta HGRPTR+1
 
-	lda ROWTEMP
-	and #$08
-	beq .noBit3
-	lda #$80
+        lda ROWTEMP
+        and #$08
+        beq .noBit3
+        lda #$80
 .noBit3
-	sta HGRPTR
+        sta HGRPTR
 
-	lda ROWTEMP
-	lsr
-	lsr
-	lsr
-	lsr
-	lsr
-	lsr
-	beq .done
-	tax
-	lda ThirdOff-1,x
-	clc
-	adc HGRPTR
-	sta HGRPTR
+        lda ROWTEMP
+        lsr
+        lsr
+        lsr
+        lsr
+        lsr
+        lsr
+        beq .done
+        tax
+        lda ThirdOff-1,x
+        clc
+        adc HGRPTR
+        sta HGRPTR
 .done
-	rts
+        rts
 
 ; ==============================
 ;     Draw Bitmap to Screen
@@ -69,43 +69,43 @@ CalcRowAddr SUBROUTINE
 ; BMPPTR = source data, BMP_X/Y = position
 ; BMP_W = width in cols, BMP_H = height in rows
 DrawBitmap SUBROUTINE
-	lda #0
-	sta BMP_ROW
+        lda #0
+        sta BMP_ROW
 .rowLoop
-	lda BMP_ROW
-	clc
-	adc BMP_Y
-	jsr CalcRowAddr
+        lda BMP_ROW
+        clc
+        adc BMP_Y
+        jsr CalcRowAddr
 
-	lda #0
-	sta BMP_COL
+        lda #0
+        sta BMP_COL
 .colLoop
-	ldy BMP_COL
-	lda (BMPPTR),y
-	pha
-	tya
-	clc
-	adc BMP_X
-	tay
-	pla
-	sta (HGRPTR),y
+        ldy BMP_COL
+        lda (BMPPTR),y
+        pha
+        tya
+        clc
+        adc BMP_X
+        tay
+        pla
+        sta (HGRPTR),y
 
-	inc BMP_COL
-	lda BMP_COL
-	cmp BMP_W
-	bne .colLoop
+        inc BMP_COL
+        lda BMP_COL
+        cmp BMP_W
+        bne .colLoop
 
-	; Advance BMPPTR by BMP_W
-	lda BMPPTR
-	clc
-	adc BMP_W
-	sta BMPPTR
-	lda BMPPTR+1
-	adc #0
-	sta BMPPTR+1
+        ; Advance BMPPTR by BMP_W
+        lda BMPPTR
+        clc
+        adc BMP_W
+        sta BMPPTR
+        lda BMPPTR+1
+        adc #0
+        sta BMPPTR+1
 
-	inc BMP_ROW
-	lda BMP_ROW
-	cmp BMP_H
-	bne .rowLoop
-	rts
+        inc BMP_ROW
+        lda BMP_ROW
+        cmp BMP_H
+        bne .rowLoop
+        rts

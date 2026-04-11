@@ -3,504 +3,504 @@
 ; ==============================
 
 InitEnemy SUBROUTINE
-	ldx #NUM_ENEMIES-1
+        ldx #NUM_ENEMIES-1
 .loop
-	lda #0
-	sta ENEM_ACT,x
-	sta ENEM_XL,x
-	sta ENEM_YL,x
-	sta ENEM_TYPE,x
-	dex
-	bpl .loop
-	rts
+        lda #0
+        sta ENEM_ACT,x
+        sta ENEM_XL,x
+        sta ENEM_YL,x
+        sta ENEM_TYPE,x
+        dex
+        bpl .loop
+        rts
 
 SpawnEnemy SUBROUTINE
-	; Index in X
-	jsr Random
-	and #$03
-	cmp #3
-	bcc .zoneOk
-	lda #1		; default to center
+        ; Index in X
+        jsr Random
+        and #$03
+        cmp #3
+        bcc .zoneOk
+        lda #1          ; default to center
 .zoneOk
-	cmp #0
-	beq .left
-	cmp #1
-	beq .center
-	lda #29		; right zone base
-	bne .addOffset
+        cmp #0
+        beq .left
+        cmp #1
+        beq .center
+        lda #29         ; right zone base
+        bne .addOffset
 .left
-	lda #5		; left zone base
-	bne .addOffset
+        lda #5          ; left zone base
+        bne .addOffset
 .center
-	lda #17		; center zone base
+        lda #17         ; center zone base
 .addOffset
-	sta ENEM_XT	; reuse temp
-	jsr Random
-	and #$03
-	clc
-	adc ENEM_XT
-	sta ENEM_X,x
-	lda #0
-	sta ENEM_XL,x
-	sta ENEM_Y,x
-	sta ENEM_YL,x
-	lda #1
-	sta ENEM_ACT,x
+        sta ENEM_XT     ; reuse temp
+        jsr Random
+        and #$03
+        clc
+        adc ENEM_XT
+        sta ENEM_X,x
+        lda #0
+        sta ENEM_XL,x
+        sta ENEM_Y,x
+        sta ENEM_YL,x
+        lda #1
+        sta ENEM_ACT,x
 
-	; Variety: Type (0-2)
-	jsr Random
-	and #$03
-	cmp #3
-	bcc .typeOk
-	lda #2		; clamp to 0-2
+        ; Variety: Type (0-2)
+        jsr Random
+        and #$03
+        cmp #3
+        bcc .typeOk
+        lda #2          ; clamp to 0-2
 .typeOk
-	sta ENEM_TYPE,x
+        sta ENEM_TYPE,x
 
-	; Variety: Horizontal Speed (DX)
-	jsr Random
-	and #$1F	; 0-31
-	clc
-	adc #4		; 4-35 fractional part
-	sta ENEM_DXL,x
-	lda #0
-	sta ENEM_DXH,x
+        ; Variety: Horizontal Speed (DX)
+        jsr Random
+        and #$1F        ; 0-31
+        clc
+        adc #4          ; 4-35 fractional part
+        sta ENEM_DXL,x
+        lda #0
+        sta ENEM_DXH,x
 
-	; Randomize direction
-	jsr Random
-	bpl .right
-	; Negate DX for left movement
-	lda #0
-	sec
-	sbc ENEM_DXL,x
-	sta ENEM_DXL,x
-	lda #0
-	sbc #0
-	sta ENEM_DXH,x
+        ; Randomize direction
+        jsr Random
+        bpl .right
+        ; Negate DX for left movement
+        lda #0
+        sec
+        sbc ENEM_DXL,x
+        sta ENEM_DXL,x
+        lda #0
+        sbc #0
+        sta ENEM_DXH,x
 .right
 
-	; Variety: Vertical Speed (DY)
-	jsr Random
-	and #$3F
-	clc
-	adc #80		; 80-143 fractional part
-	sta ENEM_DYL,x
-	lda #0
-	sta ENEM_DYH,x
-	rts
+        ; Variety: Vertical Speed (DY)
+        jsr Random
+        and #$3F
+        clc
+        adc #80         ; 80-143 fractional part
+        sta ENEM_DYL,x
+        lda #0
+        sta ENEM_DYH,x
+        rts
 
 ProcessEnemy SUBROUTINE
-	; Index in X
-	lda ENEM_ACT,x
-	beq .trySpawn
+        ; Index in X
+        lda ENEM_ACT,x
+        beq .trySpawn
 
-	stx ENEM_IDX
-	lda ENEM_X,x
-	sta ENEM_XT
-	lda ENEM_Y,x
-	sta ENEM_YT
-	jsr EraseEnemy
+        stx ENEM_IDX
+        lda ENEM_X,x
+        sta ENEM_XT
+        lda ENEM_Y,x
+        sta ENEM_YT
+        jsr EraseEnemy
 
-	ldx ENEM_IDX
-	; Move X (16-bit add)
-	lda ENEM_XL,x
-	clc
-	adc ENEM_DXL,x
-	sta ENEM_XL,x
-	lda ENEM_X,x
-	adc ENEM_DXH,x
-	cmp #40
-	bcs .respawn
-	sta ENEM_X,x
-	sta ENEM_XT
+        ldx ENEM_IDX
+        ; Move X (16-bit add)
+        lda ENEM_XL,x
+        clc
+        adc ENEM_DXL,x
+        sta ENEM_XL,x
+        lda ENEM_X,x
+        adc ENEM_DXH,x
+        cmp #40
+        bcs .respawn
+        sta ENEM_X,x
+        sta ENEM_XT
 
-	; Move Y (16-bit add)
-	lda ENEM_YL,x
-	clc
-	adc ENEM_DYL,x
-	sta ENEM_YL,x
-	lda ENEM_Y,x
-	adc ENEM_DYH,x
-	sta ENEM_Y,x
-	sta ENEM_YT
-	cmp #180
-	bcs .respawn
+        ; Move Y (16-bit add)
+        lda ENEM_YL,x
+        clc
+        adc ENEM_DYL,x
+        sta ENEM_YL,x
+        lda ENEM_Y,x
+        adc ENEM_DYH,x
+        sta ENEM_Y,x
+        sta ENEM_YT
+        cmp #180
+        bcs .respawn
 
-	jsr DrawEnemy
-	ldx ENEM_IDX
-	rts
+        jsr DrawEnemy
+        ldx ENEM_IDX
+        rts
 
 .respawn
-	lda #0
-	sta ENEM_ACT,x
-	rts
+        lda #0
+        sta ENEM_ACT,x
+        rts
 
 .trySpawn
-	jsr Random
-	cmp #$02	; smaller chance per frame since we have 12 slots
-	bcs .noSpawn
-	jsr SpawnEnemy
+        jsr Random
+        cmp #$02        ; smaller chance per frame since we have 12 slots
+        bcs .noSpawn
+        jsr SpawnEnemy
 .noSpawn
-	rts
+        rts
 
 ; ==============================
 ;       Draw Enemy
 ; ==============================
 DrawEnemy SUBROUTINE
-	lda #0
-	sta SHIP_ROW	; reuse SHIP_ROW as temp
+        lda #0
+        sta SHIP_ROW    ; reuse SHIP_ROW as temp
 .loop
-	lda SHIP_ROW
-	clc
-	adc ENEM_YT
-	cmp #192
-	bcs .skip
-	jsr CalcRowAddr
-	ldy ENEM_XT
+        lda SHIP_ROW
+        clc
+        adc ENEM_YT
+        cmp #192
+        bcs .skip
+        jsr CalcRowAddr
+        ldy ENEM_XT
 
-	ldx ENEM_IDX
-	lda ENEM_TYPE,x
-	beq .type0
-	cmp #1
-	beq .type1
-	; type 2
-	ldx SHIP_ROW
-	lda EnemySprite3,x
-	jmp .draw
+        ldx ENEM_IDX
+        lda ENEM_TYPE,x
+        beq .type0
+        cmp #1
+        beq .type1
+        ; type 2
+        ldx SHIP_ROW
+        lda EnemySprite3,x
+        jmp .draw
 .type1
-	ldx SHIP_ROW
-	lda EnemySprite2,x
-	jmp .draw
+        ldx SHIP_ROW
+        lda EnemySprite2,x
+        jmp .draw
 .type0
-	ldx SHIP_ROW
-	lda EnemySprite,x
+        ldx SHIP_ROW
+        lda EnemySprite,x
 .draw
-	ora (HGRPTR),y
-	sta (HGRPTR),y
+        ora (HGRPTR),y
+        sta (HGRPTR),y
 .skip
-	inc SHIP_ROW
-	lda SHIP_ROW
-	cmp #ENEM_HEIGHT
-	bne .loop
-	rts
+        inc SHIP_ROW
+        lda SHIP_ROW
+        cmp #ENEM_HEIGHT
+        bne .loop
+        rts
 
 ; ==============================
 ;       Erase Enemy
 ; ==============================
 EraseEnemy SUBROUTINE
-	lda #0
-	sta SHIP_ROW
+        lda #0
+        sta SHIP_ROW
 .loop
-	lda SHIP_ROW
-	clc
-	adc ENEM_YT
-	cmp #192
-	bcs .skip
-	jsr CalcRowAddr
-	ldy ENEM_XT
+        lda SHIP_ROW
+        clc
+        adc ENEM_YT
+        cmp #192
+        bcs .skip
+        jsr CalcRowAddr
+        ldy ENEM_XT
 
-	ldx ENEM_IDX
-	lda ENEM_TYPE,x
-	beq .type0
-	cmp #1
-	beq .type1
-	; type 2
-	ldx SHIP_ROW
-	lda EnemySprite3,x
-	jmp .erase
+        ldx ENEM_IDX
+        lda ENEM_TYPE,x
+        beq .type0
+        cmp #1
+        beq .type1
+        ; type 2
+        ldx SHIP_ROW
+        lda EnemySprite3,x
+        jmp .erase
 .type1
-	ldx SHIP_ROW
-	lda EnemySprite2,x
-	jmp .erase
+        ldx SHIP_ROW
+        lda EnemySprite2,x
+        jmp .erase
 .type0
-	ldx SHIP_ROW
-	lda EnemySprite,x
+        ldx SHIP_ROW
+        lda EnemySprite,x
 .erase
-	eor #$FF
-	and (HGRPTR),y
-	sta (HGRPTR),y
+        eor #$FF
+        and (HGRPTR),y
+        sta (HGRPTR),y
 .skip
-	inc SHIP_ROW
-	lda SHIP_ROW
-	cmp #ENEM_HEIGHT
-	bne .loop
-	rts
+        inc SHIP_ROW
+        lda SHIP_ROW
+        cmp #ENEM_HEIGHT
+        bne .loop
+        rts
 
 ; ==============================
 ;      Check Collisions
 ; ==============================
 CheckCollisions SUBROUTINE
-	lda BULL_ACT
-	beq .done
-	ldx #NUM_ENEMIES-1
+        lda BULL_ACT
+        beq .done
+        ldx #NUM_ENEMIES-1
 .loop
-	stx ENEM_IDX
-	lda ENEM_ACT,x
-	beq .next
+        stx ENEM_IDX
+        lda ENEM_ACT,x
+        beq .next
 
-	; Check X
-	lda BULL_X
-	cmp ENEM_X,x
-	bne .next
+        ; Check X
+        lda BULL_X
+        cmp ENEM_X,x
+        bne .next
 
-	; Check Y (swept collision to prevent skipping at high speeds)
-	lda BULL_Y
-	sec
-	sbc ENEM_Y,x
-	clc
-	adc #BULLET_SPEED
-	cmp #(BULLET_SPEED + ENEM_HEIGHT)
-	bcs .next	; outside hit range
+        ; Check Y (swept collision to prevent skipping at high speeds)
+        lda BULL_Y
+        sec
+        sbc ENEM_Y,x
+        clc
+        adc #BULLET_SPEED
+        cmp #(BULLET_SPEED + ENEM_HEIGHT)
+        bcs .next       ; outside hit range
 
-	; Hit!
-	sed		; decimal mode
-	lda SCORE
-	clc
-	adc #$10	; 10 points
-	sta SCORE
-	lda SCORE+1
-	adc #0
-	sta SCORE+1
-	cld		; back to binary
+        ; Hit!
+        sed             ; decimal mode
+        lda SCORE
+        clc
+        adc #$10        ; 10 points
+        sta SCORE
+        lda SCORE+1
+        adc #0
+        sta SCORE+1
+        cld             ; back to binary
 
-	lda ENEM_X,x
-	sta ENEM_XT
-	lda ENEM_Y,x
-	sta ENEM_YT
-	jsr EraseEnemy
-	jsr EraseBullet
-	jsr SndHit
-	ldx ENEM_IDX
-	lda #0
-	sta ENEM_ACT,x
-	sta BULL_ACT
-	jmp .done
+        lda ENEM_X,x
+        sta ENEM_XT
+        lda ENEM_Y,x
+        sta ENEM_YT
+        jsr EraseEnemy
+        jsr EraseBullet
+        jsr SndHit
+        ldx ENEM_IDX
+        lda #0
+        sta ENEM_ACT,x
+        sta BULL_ACT
+        jmp .done
 
 .next
-	ldx ENEM_IDX
-	dex
-	bpl .loop
+        ldx ENEM_IDX
+        dex
+        bpl .loop
 .done
-	rts
+        rts
 
 ; ==============================
 ;   Check Ship-Enemy Collision
 ; ==============================
 CheckShipCollision SUBROUTINE
-	ldx #NUM_ENEMIES-1
+        ldx #NUM_ENEMIES-1
 .loop
-	lda ENEM_ACT,x
-	beq .next
+        lda ENEM_ACT,x
+        beq .next
 
-	; Check X overlap: same byte column (both sprites are 1 byte wide)
-	lda SHIP_X
-	cmp ENEM_X,x
-	bne .next
+        ; Check X overlap: same byte column (both sprites are 1 byte wide)
+        lda SHIP_X
+        cmp ENEM_X,x
+        bne .next
 
-	; Check Y overlap: ranges [SHIP_Y..+4] and [ENEM_Y..+4] intersect
-	; True when ENEM_Y - SHIP_Y + ENEM_HEIGHT-1 < ENEM_HEIGHT + SHIP_HEIGHT - 1
-	; i.e. |ENEM_Y - SHIP_Y| < 5
-	lda ENEM_Y,x
-	sec
-	sbc SHIP_Y
-	clc
-	adc #(ENEM_HEIGHT-1)
-	cmp #(ENEM_HEIGHT + SHIP_HEIGHT - 1)
-	bcs .next
+        ; Check Y overlap: ranges [SHIP_Y..+4] and [ENEM_Y..+4] intersect
+        ; True when ENEM_Y - SHIP_Y + ENEM_HEIGHT-1 < ENEM_HEIGHT + SHIP_HEIGHT - 1
+        ; i.e. |ENEM_Y - SHIP_Y| < 5
+        lda ENEM_Y,x
+        sec
+        sbc SHIP_Y
+        clc
+        adc #(ENEM_HEIGHT-1)
+        cmp #(ENEM_HEIGHT + SHIP_HEIGHT - 1)
+        bcs .next
 
-	; Ship hit!
-	stx ENEM_IDX
-	lda ENEM_X,x
-	sta ENEM_XT
-	lda ENEM_Y,x
-	sta ENEM_YT
-	jsr EraseEnemy
-	ldx ENEM_IDX
-	lda #0
-	sta ENEM_ACT,x
+        ; Ship hit!
+        stx ENEM_IDX
+        lda ENEM_X,x
+        sta ENEM_XT
+        lda ENEM_Y,x
+        sta ENEM_YT
+        jsr EraseEnemy
+        ldx ENEM_IDX
+        lda #0
+        sta ENEM_ACT,x
 
-	jsr SndExplode
-	jsr ShipDeath
-	jmp MainLoop
+        jsr SndExplode
+        jsr ShipDeath
+        jmp MainLoop
 
 .next
-	dex
-	bpl .loop
-	rts
+        dex
+        bpl .loop
+        rts
 
 ; ==============================
 ;       Ship Death
 ; ==============================
 ShipDeath SUBROUTINE
-	; Flash ship
-	ldx #6
+        ; Flash ship
+        ldx #6
 .flash
-	txa
-	pha
-	jsr DrawShip
-	ldy #$80
-.d1	ldx #$FF
-.d2	dex
-	bne .d2
-	dey
-	bne .d1
-	jsr EraseShip
-	ldy #$80
-.d3	ldx #$FF
-.d4	dex
-	bne .d4
-	dey
-	bne .d3
-	pla
-	tax
-	dex
-	bne .flash
+        txa
+        pha
+        jsr DrawShip
+        ldy #$80
+.d1     ldx #$FF
+.d2     dex
+        bne .d2
+        dey
+        bne .d1
+        jsr EraseShip
+        ldy #$80
+.d3     ldx #$FF
+.d4     dex
+        bne .d4
+        dey
+        bne .d3
+        pla
+        tax
+        dex
+        bne .flash
 
-	jsr EraseShip
+        jsr EraseShip
 
-	; Lose a life
-	dec LIVES
-	bne .respawn
+        ; Lose a life
+        dec LIVES
+        bne .respawn
 
-	; Game over
-	jmp GameOver
+        ; Game over
+        jmp GameOver
 
 .respawn
-	lda #SHIP_START_X
-	sta SHIP_X
-	lda #SHIP_START_Y
-	sta SHIP_Y
-	rts
+        lda #SHIP_START_X
+        sta SHIP_X
+        lda #SHIP_START_Y
+        sta SHIP_Y
+        rts
 
 ; ==============================
 ;       Draw Score
 ; ==============================
 DrawScore SUBROUTINE
-	; 4 digits: SCORE+1 (HI then LO), SCORE (HI then LO)
-	lda #1		; X column (byte)
-	sta ENEM_XT
-	lda #2		; Y pixel row
-	sta ENEM_YT
+        ; 4 digits: SCORE+1 (HI then LO), SCORE (HI then LO)
+        lda #1          ; X column (byte)
+        sta ENEM_XT
+        lda #2          ; Y pixel row
+        sta ENEM_YT
 
-	; Digit 1 (1000s)
-	lda SCORE+1
-	lsr
-	lsr
-	lsr
-	lsr
-	jsr DrawDigit
-	inc ENEM_XT
+        ; Digit 1 (1000s)
+        lda SCORE+1
+        lsr
+        lsr
+        lsr
+        lsr
+        jsr DrawDigit
+        inc ENEM_XT
 
-	; Digit 2 (100s)
-	lda SCORE+1
-	and #$0F
-	jsr DrawDigit
-	inc ENEM_XT
+        ; Digit 2 (100s)
+        lda SCORE+1
+        and #$0F
+        jsr DrawDigit
+        inc ENEM_XT
 
-	; Digit 3 (10s)
-	lda SCORE
-	lsr
-	lsr
-	lsr
-	lsr
-	jsr DrawDigit
-	inc ENEM_XT
+        ; Digit 3 (10s)
+        lda SCORE
+        lsr
+        lsr
+        lsr
+        lsr
+        jsr DrawDigit
+        inc ENEM_XT
 
-	; Digit 4 (1s)
-	lda SCORE
-	and #$0F
-	jsr DrawDigit
-	rts
+        ; Digit 4 (1s)
+        lda SCORE
+        and #$0F
+        jsr DrawDigit
+        rts
 
 ; Draw digit in A at ENEM_XT, ENEM_YT
 DrawDigit SUBROUTINE
-	; A = digit (0-9)
-	; ENEM_XT, ENEM_YT = pos
-	sta TEMP_LO
-	asl
-	asl
-	clc
-	adc TEMP_LO ; A*5
-	sta TEMP_HI	; Base offset
-	
-	lda #0
-	sta SHIP_ROW
+        ; A = digit (0-9)
+        ; ENEM_XT, ENEM_YT = pos
+        sta TEMP_LO
+        asl
+        asl
+        clc
+        adc TEMP_LO     ; A*5
+        sta TEMP_HI     ; Base offset
+
+        lda #0
+        sta SHIP_ROW
 .loop
-	lda SHIP_ROW
-	clc
-	adc ENEM_YT
-	jsr CalcRowAddr
-	
-	ldy ENEM_XT
-	lda SHIP_ROW
-	clc
-	adc TEMP_HI
-	tax
-	lda DigitSprites,x
-	sta (HGRPTR),y ; simple overwrite for score
-	
-	inc SHIP_ROW
-	lda SHIP_ROW
-	cmp #5
-	bne .loop
-	rts
+        lda SHIP_ROW
+        clc
+        adc ENEM_YT
+        jsr CalcRowAddr
+
+        ldy ENEM_XT
+        lda SHIP_ROW
+        clc
+        adc TEMP_HI
+        tax
+        lda DigitSprites,x
+        sta (HGRPTR),y  ; simple overwrite for score
+
+        inc SHIP_ROW
+        lda SHIP_ROW
+        cmp #5
+        bne .loop
+        rts
 
 ; ==============================
 ;       Draw Lives
 ; ==============================
 DrawLives SUBROUTINE
-	; Clear all 3 icon slots first
-	lda #36
-	sta ENEM_XT
-	ldx #3
+        ; Clear all 3 icon slots first
+        lda #36
+        sta ENEM_XT
+        ldx #3
 .clearLoop
-	stx ENEM_IDX
-	lda #0
-	sta SHIP_ROW
+        stx ENEM_IDX
+        lda #0
+        sta SHIP_ROW
 .clearRow
-	lda SHIP_ROW
-	clc
-	adc #2
-	jsr CalcRowAddr
-	ldy ENEM_XT
-	lda #0
-	sta (HGRPTR),y
-	inc SHIP_ROW
-	lda SHIP_ROW
-	cmp #SHIP_HEIGHT
-	bne .clearRow
-	dec ENEM_XT
-	dec ENEM_XT
-	ldx ENEM_IDX
-	dex
-	bne .clearLoop
+        lda SHIP_ROW
+        clc
+        adc #2
+        jsr CalcRowAddr
+        ldy ENEM_XT
+        lda #0
+        sta (HGRPTR),y
+        inc SHIP_ROW
+        lda SHIP_ROW
+        cmp #SHIP_HEIGHT
+        bne .clearRow
+        dec ENEM_XT
+        dec ENEM_XT
+        ldx ENEM_IDX
+        dex
+        bne .clearLoop
 
-	; Draw remaining lives
-	lda #36
-	sta ENEM_XT
-	ldx LIVES
-	dex		; show lives-1 (remaining after current)
-	beq .done
+        ; Draw remaining lives
+        lda #36
+        sta ENEM_XT
+        ldx LIVES
+        dex             ; show lives-1 (remaining after current)
+        beq .done
 .shipLoop
-	stx ENEM_IDX
-	lda #0
-	sta SHIP_ROW
+        stx ENEM_IDX
+        lda #0
+        sta SHIP_ROW
 .rowLoop
-	lda SHIP_ROW
-	clc
-	adc #2		; Y pixel row 2
-	jsr CalcRowAddr
-	ldy ENEM_XT
-	ldx SHIP_ROW
-	lda ShipSprite,x
-	sta (HGRPTR),y
-	inc SHIP_ROW
-	lda SHIP_ROW
-	cmp #SHIP_HEIGHT
-	bne .rowLoop
-	dec ENEM_XT
-	dec ENEM_XT	; 2 columns apart
-	ldx ENEM_IDX
-	dex
-	bne .shipLoop
+        lda SHIP_ROW
+        clc
+        adc #2          ; Y pixel row 2
+        jsr CalcRowAddr
+        ldy ENEM_XT
+        ldx SHIP_ROW
+        lda ShipSprite,x
+        sta (HGRPTR),y
+        inc SHIP_ROW
+        lda SHIP_ROW
+        cmp #SHIP_HEIGHT
+        bne .rowLoop
+        dec ENEM_XT
+        dec ENEM_XT     ; 2 columns apart
+        ldx ENEM_IDX
+        dex
+        bne .shipLoop
 .done
-	rts
+        rts

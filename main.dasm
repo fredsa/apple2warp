@@ -17,114 +17,114 @@
 ;       Game Over Screen
 ; ==============================
 GameOver SUBROUTINE
-	sta TXTCLR
-	sta MIXCLR
-	sta TXTPAGE2
-	sta HIRES
+        sta TXTCLR
+        sta MIXCLR
+        sta TXTPAGE2
+        sta HIRES
 
-	jsr ClearHGR
+        jsr ClearHGR
 
-	; Draw "GAME OVER" at row 80, column 15
-	lda #<GameOverBmp
-	sta BMPPTR
-	lda #>GameOverBmp
-	sta BMPPTR+1
-	lda #80
-	sta BMP_Y
-	lda #15
-	sta BMP_X
-	lda #GAMEOVER_COLS
-	sta BMP_W
-	lda #GAMEOVER_ROWS
-	sta BMP_H
-	jsr DrawBitmap
+        ; Draw "GAME OVER" at row 80, column 15
+        lda #<GameOverBmp
+        sta BMPPTR
+        lda #>GameOverBmp
+        sta BMPPTR+1
+        lda #80
+        sta BMP_Y
+        lda #15
+        sta BMP_X
+        lda #GAMEOVER_COLS
+        sta BMP_W
+        lda #GAMEOVER_ROWS
+        sta BMP_H
+        jsr DrawBitmap
 
-	; Draw "PRESS ANY KEY" at row 110, column 13
-	lda #<PressKeyBmp
-	sta BMPPTR
-	lda #>PressKeyBmp
-	sta BMPPTR+1
-	lda #110
-	sta BMP_Y
-	lda #13
-	sta BMP_X
-	lda #PRESSKEY_COLS
-	sta BMP_W
-	lda #PRESSKEY_ROWS
-	sta BMP_H
-	jsr DrawBitmap
+        ; Draw "PRESS ANY KEY" at row 110, column 13
+        lda #<PressKeyBmp
+        sta BMPPTR
+        lda #>PressKeyBmp
+        sta BMPPTR+1
+        lda #110
+        sta BMP_Y
+        lda #13
+        sta BMP_X
+        lda #PRESSKEY_COLS
+        sta BMP_W
+        lda #PRESSKEY_ROWS
+        sta BMP_H
+        jsr DrawBitmap
 
-	; Wait for key
-	sta KBDSTRB
+        ; Wait for key
+        sta KBDSTRB
 .waitKey
-	lda KBD
-	bpl .waitKey
-	sta KBDSTRB
+        lda KBD
+        bpl .waitKey
+        sta KBDSTRB
 
 ; ==============================
 ;         Start New Game
 ; ==============================
 Start SUBROUTINE
-	lda #$A5
-	sta SEEDL
-	lda #$5A
-	sta SEEDH
+        lda #$A5
+        sta SEEDL
+        lda #$5A
+        sta SEEDH
 
-	lda #SHIP_START_X
-	sta SHIP_X
-	lda #SHIP_START_Y
-	sta SHIP_Y
+        lda #SHIP_START_X
+        sta SHIP_X
+        lda #SHIP_START_Y
+        sta SHIP_Y
 
-	lda #0
-	sta BULL_ACT
-	sta SCORE
-	sta SCORE+1
-	lda #3
-	sta LIVES
+        lda #0
+        sta BULL_ACT
+        sta SCORE
+        sta SCORE+1
+        lda #3
+        sta LIVES
 
-	jsr ClearHGR
-	jsr InitAllStars
-	jsr InitEnemy
+        jsr ClearHGR
+        jsr InitAllStars
+        jsr InitEnemy
 
 ; ==============================
 ;         Main Loop
 ; ==============================
 MainLoop SUBROUTINE
-	inc FRAME_COUNT
-	lda #0
-	sta STAR_IDX
+        inc FRAME_COUNT
+        lda #0
+        sta STAR_IDX
 .starLoop
-	jsr ProcessStar
-	inc STAR_IDX
-	lda STAR_IDX
-	cmp #NUM_STARS
-	bne .starLoop
+        jsr ProcessStar
+        inc STAR_IDX
+        lda STAR_IDX
+        cmp #NUM_STARS
+        bne .starLoop
 
-	jsr ProcessBullet
-	ldx #NUM_ENEMIES-1
+        jsr ProcessBullet
+        ldx #NUM_ENEMIES-1
 .enemLoop
-	jsr ProcessEnemy
-	dex
-	bpl .enemLoop
-	jsr CheckCollisions
-	jsr CheckShipCollision
-	jsr DrawScore
-	jsr DrawLives
+        jsr ProcessEnemy
+        dex
+        bpl .enemLoop
+        jsr CheckCollisions
+        jsr CheckShipCollision
+        jsr DrawScore
+        jsr DrawLives
 
-	; Bullet cleanup: deactivate if off-screen (Y >= 192)
-	lda BULL_ACT
-	beq .noKill
-	lda BULL_Y
-	cmp #192
-	bcc .noKill
-	lda #0
-	sta BULL_ACT
+        ; Bullet cleanup: deactivate if off-screen (Y >= 192)
+        lda BULL_ACT
+        beq .noKill
+        lda BULL_Y
+        cmp #192
+        bcc .noKill
+        lda #0
+        sta BULL_ACT
 .noKill
-	jsr EraseShip
-	jsr ReadInput
-	jsr DrawShip
+        jsr EraseShip
+        jsr ReadInput
+        jsr DrawShip
 
-	jmp MainLoop
+        jmp MainLoop
 
         include "hgr.dasm"
         include "stars.dasm"
@@ -138,4 +138,3 @@ MainLoop SUBROUTINE
 ; ==============================
 
         include "data.dasm"
-

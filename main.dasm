@@ -24,6 +24,58 @@ GameOver SUBROUTINE
 
         jsr ClearHGR
 
+        ; Draw all 3 alien types on game over screen
+        ; Alien type 0 at column 13, row 50
+        ldx #0
+.alienType0
+        txa
+        pha
+        clc
+        adc #50
+        jsr CalcRowAddr
+        pla
+        tax
+        ldy #13
+        lda EnemySprite,x
+        sta (HGRPTR),y
+        inx
+        cpx #ENEM_HEIGHT
+        bne .alienType0
+
+        ; Alien type 1 at column 19, row 50
+        ldx #0
+.alienType1
+        txa
+        pha
+        clc
+        adc #50
+        jsr CalcRowAddr
+        pla
+        tax
+        ldy #19
+        lda EnemySprite2,x
+        sta (HGRPTR),y
+        inx
+        cpx #ENEM_HEIGHT
+        bne .alienType1
+
+        ; Alien type 2 at column 25, row 50
+        ldx #0
+.alienType2
+        txa
+        pha
+        clc
+        adc #50
+        jsr CalcRowAddr
+        pla
+        tax
+        ldy #25
+        lda EnemySprite3,x
+        sta (HGRPTR),y
+        inx
+        cpx #ENEM_HEIGHT
+        bne .alienType2
+
         ; Draw "GAME OVER" at row 80, column 15
         lda #<GameOverBmp
         sta BMPPTR
@@ -53,6 +105,23 @@ GameOver SUBROUTINE
         lda #PRESSKEY_ROWS
         sta BMP_H
         jsr DrawBitmap
+
+        ; Draw player ship at starting position
+        ldx #0
+.playerShip
+        txa
+        pha
+        clc
+        adc #SHIP_START_Y
+        jsr CalcRowAddr
+        pla
+        tax
+        ldy #SHIP_START_X
+        lda ShipSprite,x
+        sta (HGRPTR),y
+        inx
+        cpx #SHIP_HEIGHT
+        bne .playerShip
 
         ; Wait for key
         sta KBDSTRB

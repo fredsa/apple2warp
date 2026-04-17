@@ -14,7 +14,11 @@ ReadInput SUBROUTINE
         beq .right
         cmp #$8B        ; up arrow
         beq .goUp
+        cmp #$C1        ; 'A' key
+        beq .goUp
         cmp #$8A        ; down arrow
+        beq .goDown
+        cmp #$DA        ; 'Z' key
         beq .goDown
 .noKey
         rts
